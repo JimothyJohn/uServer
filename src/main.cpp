@@ -3,12 +3,8 @@
 #include <WebStrings.h> // HTML Data
 
 // Load async web library
-#ifdef ESP32
-  #include <WiFiManager.h> // Use WifiManager for login and maintenance
-  #include <AsyncTCP.h>
-#else
-  #include <ESPAsyncTCP.h>
-#endif
+#include <WiFiManager.h> // Use WifiManager for login and maintenance
+#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoOTA.h> // Enable OTA updates
 #include <ESPmDNS.h> // Connect by hostname

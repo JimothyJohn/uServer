@@ -69,7 +69,7 @@ void SetupWiFi() {
 
   WiFiManager wm;
 
-  bool res = wm.autoConnect("LEDSetup"); // anonymous ap
+  bool res = wm.autoConnect("uServer"); // anonymous ap
 
   if(!res) {
       Serial.println("Failed to connect");

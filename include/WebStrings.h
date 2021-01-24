@@ -13,7 +13,7 @@ String javaString = {R"=====(
 )====="
 };
 
-String headerString = {R"=====(
+String headString = {R"=====(
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,5 +74,5 @@ String navHTML() {
 </main>
 </body>
 )=====";
-    return headerString+bodyString+footerString;
+    return headString+bodyString+footerString;
 }

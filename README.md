@@ -1,12 +1,11 @@
 # uServer
 
-Framework for rapid IoT development on ESP32. Build webpages fast and exchange data quick!
+Framework for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
 
 * PlatformIO-based for instant deployment on ESP32
 * OTA for remote updates and scalability
 * Wi-Fi login server for automatic configuration and security
-* Hostname connection for ease-of-access
-* HTML5 Asynchcronous web server, powered by Boostrap, for custom UI creation
+* Asynchcronous web server, powered by Boostrap, for custom UI creation
 
 ## Hardware Required
 
@@ -18,7 +17,7 @@ Framework for rapid IoT development on ESP32. Build webpages fast and exchange d
 
 ## Installation
 
-See [`Quickstart Guide`](QUICKSTART.md) to quickly get it up and running.
+See [`QUICKSTART`](QUICKSTART.md) to quickly get it up and running. See [`LAYOUT`](LAYOUT.md) to see how it works.
 
 ## Core Libraries
 

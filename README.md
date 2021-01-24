@@ -26,3 +26,14 @@ See [`QUICKSTART`](QUICKSTART.md) to quickly get it up and running. See [`LAYOUT
 * <a href="https://github.com/me-no-dev/ESPAsyncWebServer">ESPAsyncWebServer</a>
 * <a href="https://github.com/FastLED/FastLED">FastLED</a>
 * <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a>
+
+## To-do List
+
+* Add security/authentication
+* Add project examples
+    * IoT - MQTT
+    * Home automation - Philips Hue
+    * Lighting effects - FastLED
+* Change Wi-Fi login from default
+* Minimize energy consumption
+* Port to other platforms

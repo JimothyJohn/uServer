@@ -1,4 +1,4 @@
-# Quick Start Guide
+# Quick Start Guide - Unix (Linux/Mac)
 
 Start by installing PlatformIO with:
 

@@ -9,7 +9,7 @@ Framework for rapid IoT development on ESP32. Build webpages fast and exchange d
 
 ## Hardware Required
 
-* This project will only work on an <a href="https://www.mouser.com/ProductDetail/Espressif-Systems/ESP32-DevKitC-32UE/?qs=GedFDFLaBXFguOYDKoZ3jA%3D%3D">ESP32</a>.
+* This project is only tested on an <a href="https://www.mouser.com/ProductDetail/Espressif-Systems/ESP32-DevKitC-32UE/?qs=GedFDFLaBXFguOYDKoZ3jA%3D%3D">ESP32</a>.
 
 ## Software Required
 

@@ -1,4 +1,4 @@
-# Quick Start Guide - Unix (Linux/Mac)
+# Quick Start Guide
 
 Start by installing PlatformIO with:
 
@@ -7,7 +7,7 @@ Start by installing PlatformIO with:
 user@host:~$ python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
 ```
 
-OPTIONAL - I use the <a href="https://platformio.org/platformio-ide">PlatformIO extension in VS Code</a>, but I also like to create an alias to quickly activate PlatformIO on the command line.
+OPTIONAL (Linux/Mac) - I use the <a href="https://platformio.org/platformio-ide">PlatformIO extension in VS Code</a>, but I also like to create the alias "platformio" to quickly activate PlatformIO on the command line.
 
 ```sh 
 # Create alias

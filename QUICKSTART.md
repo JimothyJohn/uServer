@@ -33,6 +33,7 @@ Move to root of repository and upload via VS Code or command line (make sure pen
 
 ```sh
 (penv) user@host:~$ cd <uServer>
+(penv) user@host:<uServer>$ pio run -t uploadfs
 (penv) user@host:<uServer>$ pio run -t upload
 ```
 

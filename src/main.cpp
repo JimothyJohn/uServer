@@ -1,27 +1,39 @@
-//Base framework
-#include <Arduino.h>
-#include <WebStrings.h> // HTML Data
-
-// Load async web library
-#include <WiFiManager.h> // Use WifiManager for login and maintenance
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <Arduino.h> //Base framework
+#include <WiFiManager.h> // AP login and maintenance
+#include <AsyncTCP.h> // Generic async library
+#include <ESPAsyncWebServer.h> // ESP32 async library
 #include <ArduinoOTA.h> // Enable OTA updates
 #include <ESPmDNS.h> // Connect by hostname
-
+#include <SPIFFS.h> // Enable file system
 AsyncWebServer server(80);
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
+// SPIFFS uses processor to replace HTML text with variables
+String processor(const String& var) {
+  if(var == "TEST_VAR") {return "first variable";}
+  if(var == "TEST_VAR_AGAIN") {return "second variable";}
+}
+
 // Set up server callback functions
 // https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino
 void SetupServer() {
   Serial.print('Configuring webserver...');
-  // Index page, defaults to off
+  // Index page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, "text/html", navHTML());
+    request->send(SPIFFS, "/index.html", String(), false, processor);
+  });
+
+  // Route to load style.css file
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/style.css", "text/css");
+  });
+
+  // Route to load script.js file
+  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script.js", "text/js");
   });
 
   server.onNotFound(notFound);
@@ -99,6 +111,12 @@ void setup() {
   if(!MDNS.begin("microserver")) {
     Serial.println("Error starting mDNS!");
     ESP.restart();
+  }
+  // Initialize SPIFFS
+  // https://docs.platformio.org/en/latest/platforms/espressif8266.html#using-filesystem
+  if(!SPIFFS.begin(true)){
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
   }
 }
 

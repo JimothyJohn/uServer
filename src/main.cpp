@@ -5,6 +5,7 @@
 #include <ArduinoOTA.h> // Enable OTA updates
 #include <ESPmDNS.h> // Connect by hostname
 #include <SPIFFS.h> // Enable file system
+
 AsyncWebServer server(80);
 
 void notFound(AsyncWebServerRequest *request) {
@@ -12,17 +13,20 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 // SPIFFS uses processor to replace HTML text with variables
-String processor(const String& var) {
-  if(var == "TEST_VAR") {return "first variable";}
-  if(var == "TEST_VAR_AGAIN") {return "second variable";}
+String indexProcessor(const String& var) {
+  if(var == "TEST_VAR") {return "First variable";}
+  if(var == "TEST_VAR_AGAIN") {return "Second variable";}
 }
 
 // Set up server callback functions
 void SetupServer() {
   Serial.print('Configuring webserver...');
-  // Index page
+  // Index pages
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+    request->send(SPIFFS, "/index.html", String(), false, indexProcessor);
+  });
+  server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html", String(), false, indexProcessor);
   });
 
   // Route to load style.css file
@@ -33,6 +37,21 @@ void SetupServer() {
   // Route to load script.js file
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/script.js", "text/js");
+  });
+
+  // Route to load I/O page
+  server.on("/io.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/io.html", String(), false, indexProcessor);
+  });
+
+  // Route to load web page
+  server.on("/web.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/web.html", String(), false, indexProcessor);
+  });
+
+  // Route to load variable page
+  server.on("/variables.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/variables.html", String(), false, indexProcessor);
   });
 
   server.onNotFound(notFound);

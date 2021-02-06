@@ -48,4 +48,4 @@ upload_protocol = espota
 upload_port = userver.local
 ```
 
-Your device is permanently configured to connect to your Wi-Fi on bootup so future uploads can now be over-the-air!
+Your device is permanently configured to connect to your Wi-Fi on bootup so future uploads can now be over-the-air! Connect to your device on the same network at http://userver.local/.

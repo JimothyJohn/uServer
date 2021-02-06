@@ -20,9 +20,14 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 
 See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
 
+## Sample Page
+
+![Webpage screenshot](https://drive.google.com/uc?id=18oRyFornn44xHVyPGCcWwTIvMA_0hs_T)
+
 ## Helpful Examples:
 
-* <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Async Webserver</a>* <a href="https://github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/BasicOTA/BasicOTA.ino">OTA</a>
+* <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Async Webserver</a>
+* <a href="https://github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/BasicOTA/BasicOTA.ino">OTA</a>
 * <a href="https://github.com/tzapu/WiFiManager/blob/master/examples/Basic/Basic.ino">WiFi Manager</a>
 
 ## To-do List

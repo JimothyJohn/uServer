@@ -66,6 +66,7 @@ void SetupOTA() {
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
       else if (error == OTA_END_ERROR) Serial.println("End Failed");
+      ESP.restart();
     });
 
   ArduinoOTA.begin();
@@ -104,16 +105,15 @@ void setup() {
   SetupServer();
   // Configures over-the-air updates
   SetupOTA();
-  // Allows for connection at http://ledcontrol.local/
+  // mDNS allows for connection at http://userver.local/
   if(!MDNS.begin("userver")) {
     Serial.println("Error starting mDNS!");
     ESP.restart();
   }
   // Initialize SPIFFS
-  // https://docs.platformio.org/en/latest/platforms/espressif8266.html#using-filesystem
   if(!SPIFFS.begin(true)){
     Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
+    ESP.restart();
   }
 }
 

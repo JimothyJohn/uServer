@@ -1,9 +1,8 @@
 # uServer
 
-Framework for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
+Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
 
-* Instant deployment - <a href="https://github.com/platformio/
-platformio-core">PlatformIO</a>
+* Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a>
 * Soft AP - <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a>
 * Over-the-air updates - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA">Arduino OTA</a>
 * File serving (.html, .css, .js, etc.) - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/SPIFFS">SPIFFS</a>

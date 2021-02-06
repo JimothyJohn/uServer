@@ -21,6 +21,11 @@ platformio-core">PlatformIO</a>
 
 See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
 
+## Helpful Examples:
+
+* <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Async Webserver</a>* <a href="https://github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/BasicOTA/BasicOTA.ino">OTA</a>
+* <a href="https://github.com/tzapu/WiFiManager/blob/master/examples/Basic/Basic.ino">WiFi Manager</a>
+
 ## To-do List
 
 * Add security/authentication

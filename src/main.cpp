@@ -18,7 +18,6 @@ String processor(const String& var) {
 }
 
 // Set up server callback functions
-// https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino
 void SetupServer() {
   Serial.print('Configuring webserver...');
   // Index page
@@ -41,7 +40,6 @@ void SetupServer() {
 }
 
 // Enable OTA updates
-// https://github.com/espressif/arduino-esp32/blob/master/libraries/ArduinoOTA/examples/BasicOTA/BasicOTA.ino
 void SetupOTA() {
   Serial.print('Configuring OTA...');
   ArduinoOTA
@@ -74,7 +72,6 @@ void SetupOTA() {
 }
 
 // Initialize Wi-Fi manager and connect to Wi-Fi
-// https://github.com/tzapu/WiFiManager/blob/master/examples/Basic/Basic.ino
 void SetupWiFi() {
   Serial.print('Configuring WiFi...');
   WiFi.mode(WIFI_STA); // make sure your code sets wifi mode
@@ -108,7 +105,7 @@ void setup() {
   // Configures over-the-air updates
   SetupOTA();
   // Allows for connection at http://ledcontrol.local/
-  if(!MDNS.begin("microserver")) {
+  if(!MDNS.begin("userver")) {
     Serial.println("Error starting mDNS!");
     ESP.restart();
   }
@@ -120,6 +117,7 @@ void setup() {
   }
 }
 
+// Main loop
 void loop() {
   ArduinoOTA.handle();
 }

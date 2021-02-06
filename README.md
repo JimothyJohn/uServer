@@ -2,15 +2,15 @@
 
 Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
 
-* Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a>
-* Soft AP - <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a>
-* Over-the-air updates - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA">Arduino OTA</a>
-* File serving (.html, .css, .js, etc.) - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/SPIFFS">SPIFFS</a>
-* Simple web server - <a href="https://github.com/me-no-dev/ESPAsyncWebServer">ESPAsyncWebServer</a>
+* Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a> (Estonia)
+* Soft AP - <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a> (Asia)
+* Over-the-air updates - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA">Arduino OTA</a> (Slovakia)
+* File serving (.html, .css, .js, etc.) - <a href="https://github.com/pellepl/spiffs">SPIFFS</a> (Sweden)
+* Simple web server - <a href="https://github.com/me-no-dev/ESPAsyncWebServer">ESPAsyncWebServer</a> (Bulgaria)
 
 ## Hardware Required
 
-* This project is only tested on an <a href="https://www.mouser.com/ProductDetail/Espressif-Systems/ESP32-DevKitC-32UE/?qs=GedFDFLaBXFguOYDKoZ3jA%3D%3D">ESP32</a>.
+* This project is only tested on an <a href="https://www.mouser.com/ProductDetail/Espressif-Systems/ESP32-DevKitC-32UE/?qs=GedFDFLaBXFguOYDKoZ3jA%3D%3D">ESP32</a> (China)
 
 ## Software Required
 
@@ -27,6 +27,7 @@ See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
 
 ## To-do List
 
+* Migrate to LittleFS (SPIFFS deprecated)
 * Add security/authentication
 * Add project examples
     * IoT - MQTT

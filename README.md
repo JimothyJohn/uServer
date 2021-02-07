@@ -2,6 +2,12 @@
 
 Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
 
+## Sample Page
+
+![Webpage screenshot](https://drive.google.com/uc?id=18oRyFornn44xHVyPGCcWwTIvMA_0hs_T)
+
+## Features
+
 * Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a> (Estonia)
 * Soft AP - <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a> (Asia)
 * Over-the-air updates - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA">Arduino OTA</a> (Slovakia)
@@ -19,10 +25,6 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 ## Installation
 
 See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
-
-## Sample Page
-
-![Webpage screenshot](https://drive.google.com/uc?id=18oRyFornn44xHVyPGCcWwTIvMA_0hs_T)
 
 ## Helpful Examples:
 

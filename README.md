@@ -33,11 +33,8 @@ See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
 ## To-do List
 
 * Migrate to LittleFS (SPIFFS deprecated)
-* Add security/authentication
-* Add project examples
-    * IoT - MQTT
-    * Home automation - Philips Hue
-    * Lighting effects - FastLED
+* Add more responsive CSS
+* Add additional security/authentication
 * Change Wi-Fi login from default
 * Minimize energy consumption
 * Port to other platforms

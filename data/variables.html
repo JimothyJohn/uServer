@@ -12,32 +12,47 @@
 <body>
 <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/index.html">&#956</a>
+        <a class="navbar-brand" href="/">&#956</a>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav me-auto mb-2 mb-md-0">
                 <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="/index.html">Home</a>
+                    <a class="nav-link" aria-current="page" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/io.html">Digital I/O</a>
+                    <a class="nav-link" href="/io">Digital I/O</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/web.html">Webpages</a>
+                    <a class="nav-link" href="/web">Webpages</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" href="/variables.html">Variables</a>
+                    <a class="nav-link" href="/variables">Variables</a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
-<main class="container">
+<main class="container-fluid">
     <div class="bg-light p-5 rounded">
         <h1>Variables</h1>
         <p class="lead">Use forms and inputs to set variables and 
                         parameters all via web browser.
         </p>
-        <a class="btn btn-lg btn-primary" href="https://github.com/JimothyJohn/uServer" role="button">View repo docs</a>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col text-center">
+                <h2>Number selected: %POST_INT%</h2>
+                <form action="/variables" method="post">
+                    <select name="postInt" id="postInt" onchange="if(this.value!=0) {this.form.submit();}">
+                        <option value=0>Choose number...</option>
+                        <option value=1>1</option>
+                        <option value=2>2</option>
+                        <option value=3>3</option>
+                        <option value=4>4</option>
+                    </select>
+                  </form>
+            </div>
+        </div>
     </div>
 </main>
 </body>
@@ -52,3 +67,4 @@
       </div>
 </footer>
 </html>
+

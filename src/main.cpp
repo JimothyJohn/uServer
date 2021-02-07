@@ -1,3 +1,5 @@
+
+// Load relevant libraries
 #include <Arduino.h> //Base framework
 #include <WiFiManager.h> // AP login and maintenance
 #include <AsyncTCP.h> // Generic async library
@@ -6,6 +8,14 @@
 #include <ESPmDNS.h> // Connect by hostname
 #include <SPIFFS.h> // Enable file system
 
+// Variables for "Digital I/O" page, change to match your configuration
+const uint8_t buttonPin = 2; // the number of the pushbutton pin
+const uint8_t ledPin =  13; // the number of the LED pin
+String outputState = "None"; // output state
+
+// Variables for "Variables" example, change to match your configuration
+String postMsg = "None"; // the number of the pushbutton pin
+
 AsyncWebServer server(80);
 
 void notFound(AsyncWebServerRequest *request) {
@@ -13,20 +23,20 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 // SPIFFS uses processor to replace HTML text with variables
-String indexProcessor(const String& var) {
-  if(var == "TEST_VAR") {return "First variable";}
-  if(var == "TEST_VAR_AGAIN") {return "Second variable";}
+String processor(const String& var) {
+  if(var == "INPUT_NUMBER") {return String(buttonPin);}
+  if(var == "INPUT_STATE") {return String(digitalRead(buttonPin));}
+  if(var == "OUTPUT_NUMBER") {return String(ledPin);}
+  if(var == "OUTPUT_STATE") {return outputState;}
+  if(var == "POST_INT") {return postMsg;}
 }
 
 // Set up server callback functions
 void SetupServer() {
   Serial.print('Configuring webserver...');
-  // Index pages
+  // Index/home page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, indexProcessor);
-  });
-  server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, indexProcessor);
+    request->send(SPIFFS, "/index.html", String(), false, processor);
   });
 
   // Route to load style.css file
@@ -40,18 +50,34 @@ void SetupServer() {
   });
 
   // Route to load I/O page
-  server.on("/io.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/io.html", String(), false, indexProcessor);
+  server.on("/io", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/io.html", String(), false, processor);
+  });
+
+  // Send a POST request to <IP>/post with a form field message set to <message>
+  server.on("/io", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("output", true)) {
+        outputState = request->getParam("output", true)->value();
+    }
+    request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
   // Route to load web page
-  server.on("/web.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/web.html", String(), false, indexProcessor);
+  server.on("/web", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/web.html", String(), false, processor);
   });
 
   // Route to load variable page
-  server.on("/variables.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/variables.html", String(), false, indexProcessor);
+  server.on("/variables", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/variables.html", String(), false, processor);
+  });
+
+  // Send a POST request to <IP>/post with a form field message set to <message>
+  server.on("/variables", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("postInt", true)) {
+        postMsg = request->getParam("postInt", true)->value();
+    }
+    request->send(SPIFFS, "/variables.html", String(), false, processor);
   });
 
   server.onNotFound(notFound);
@@ -134,6 +160,9 @@ void setup() {
     Serial.println("An Error has occurred while mounting SPIFFS");
     ESP.restart();
   }
+
+  pinMode(ledPin, OUTPUT); // initialize the LED pin as an output:
+  pinMode(buttonPin, INPUT); // initialize the pushbutton pin as an input:
 }
 
 // Main loop

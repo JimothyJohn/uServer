@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+cp $HOME/Web/data/www/* $HOME/Arduino/uServer-dev/data/

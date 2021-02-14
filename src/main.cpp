@@ -35,8 +35,8 @@ String processor(const String& var) {
 void SetupServer() {
   Serial.print('Configuring webserver...');
   // Index/home page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+  server.on("^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html");
   });
 
   // Route to load style.css file
@@ -50,30 +50,35 @@ void SetupServer() {
   });
 
   // Route to load I/O page
-  server.on("/io", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
   // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("/io", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/io$|^(\/io\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("output", true)) {
         outputState = request->getParam("output", true)->value();
     }
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
-  // Route to load web page
-  server.on("/web", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
   });
+	
+	/*
+  server.on("/web.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/web.html", String(), false, processor);
+  });
+  */
 
   // Route to load variable page
-  server.on("/variables", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/variables$|^(\/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/variables.html", String(), false, processor);
   });
 
   // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("/variables", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/variables$|^(\/variables\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("postInt", true)) {
         postMsg = request->getParam("postInt", true)->value();
     }

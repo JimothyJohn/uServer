@@ -82,6 +82,12 @@ void SetupServer() {
   server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
   });
+	
+	/*
+  server.on("/web.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/web.html", String(), false, processor);
+  });
+  */
 
   // Route to load variable page
   server.on("^\/variables$|^(\/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){

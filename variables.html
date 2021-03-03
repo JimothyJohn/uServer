@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="/style.css" rel="stylesheet">
+    <link href="/uServer/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <title>uServer - Dev</title>
@@ -11,34 +11,13 @@
 
 <body>
 <header>
-<<<<<<< HEAD
-    <div class="navbar navbar-dark bg-dark shadow px-5">
-        <a href="/" class="navbar-brand px-3">About</a>
-        <a href="/io.html" class="navbar-brand px-3">Digital I/O</a>
-        <a href="/variables.html" class="navbar-brand px-3">
-            <strong>Variables</strong></a>
-        <a href="/mqtt.html" class="navbar-brand px-3">MQTT</a>
-        <a href="/web.html" class="navbar-brand px-3">Webpages</a>
-    </div>
-</header>
-<main class="container-fluid">
-    <div class="row p-5 justify-content-center">
-        <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
-            <h1 class="p-4 headline"><strong>Variables</strong></Variables></h1>
-            <p class="lead text-muted pb-3">Use forms and inputs to set variables and 
-                            parameters all via web browser.
-        </div>
-    </div>
-    <div class="row p-3 justify-content-center">
-        <div class="controls col-6 col-md-4 align-self-center text-center">
-=======
     <div class="navbar navbar-dark bg-dark shadow">
         <div class="container d-flex justify-content-between">
-        <a href="/" class="navbar-brand d-flex align-items-center">About</a>
-        <a href="/io.html" class="navbar-brand d-flex align-items-center">Digital I/O</a>
-        <a href="/variables.html" class="navbar-brand d-flex align-items-center">
+        <a href="/uServer/" class="navbar-brand d-flex align-items-center">About</a>
+        <a href="/uServer/io.html" class="navbar-brand d-flex align-items-center">Digital I/O</a>
+        <a href="/uServer/variables.html" class="navbar-brand d-flex align-items-center">
             <strong>Variables</strong></a>
-        <a href="/web.html" class="navbar-brand d-flex align-items-center">Webpages</a>
+        <a href="/uServer/web.html" class="navbar-brand d-flex align-items-center">Webpages</a>
         </div>
     </div>
 </header>
@@ -53,18 +32,13 @@
     </div>
     <div class="row p-3 justify-content-center">
         <div class="col-6 col-md-4 align-self-center text-center">
->>>>>>> af8f5ca03cef5adc3d1076145b946db6b8d90e68
             <h2>Number selected: %POST_INT%</h2>
         </div>
     </div>
     <div class="row justify-content-center">
         <div class="col-4 col-md-2 align-self-center text-center">
-            <form action="/variables.html" method="post">
-<<<<<<< HEAD
-                <select name="postInt" class="form-control shadow" id="postInt" onchange="if(this.value!=0) {this.form.submit();}">
-=======
+            <form action="/uServer/variables.html" method="post">
                 <select name="postInt" class="form-control" id="postInt" onchange="if(this.value!=0) {this.form.submit();}">
->>>>>>> af8f5ca03cef5adc3d1076145b946db6b8d90e68
                     <option value=0>Choose a number...</option>
                     <option value=1>1</option>
                     <option value=2>2</option>

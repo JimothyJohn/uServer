@@ -15,24 +15,38 @@
         <a href="/" class="navbar-brand px-3">About</a>
         <a href="/io.html" class="navbar-brand px-3">Digital I/O</a>
         <a href="/variables.html" class="navbar-brand px-3">Variables</strong></a>
-        <a href="/mqtt.html" class="navbar-brand px-3">MQTT</a>
-        <a href="/web.html" class="navbar-brand px-3">
-            <strong>Webpages</strong></a>
+        <a href="/mqtt.html" class="navbar-brand px-3">
+            <strong>MQTT</strong>
+        <a href="/web.html" class="navbar-brand px-3">Webpages</a>
     </div>
 </header>
-<iframe width="100%" height="auto" src="https://www.youtube.com/embed/D0cMpniuwcI?start=121&end=157&autoplay=1&mute=1&controls=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen id="myVideo"></iframe>
 <main class="container-fluid">
     <div class="row p-5 justify-content-center">
-        <div class="webcard col col-md-6 semitrans rounded-3 align-self-center text-center shadow">
-            <h1 class="p-4 headline"><strong>Web Design</strong></h1>
-            <p class="lead text-muted pb-3">Use standard .html, .css, or .js files just
-                like you would with any website.</p>
-            <p><bold>PROTIP:</bold> Leverage the browser with hotlinks and JavaScript.</p>
+        <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
+            <h1 class="p-4 headline"><strong>MQTT</strong></h1>
+            <p class="lead text-muted pb-3">Publish messages and subscribe to topics!</p>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="controls col-4 col-md-2 align-self-center text-center">
+            <h3>Publish</h3>
+            <form action="/mqtt.html" method="post">
+                <label for="pubmsg">Message:</label><br>
+                <input type="text" id="pubmsg" name="pubmsg" value="Enter message..."><br>
+                <label for="pubtopic">Topic:</label><br>
+                <input type="text" id="subtopic" name="subtopic" value="Choose topic..."><br><br>
+                <input type="submit" value="Publish">
+            </form> 
+            <h3>Subscribe</h3>
+            <form action="/mqtt.html" method="post">
+                <label for="subtopic">Topic:</label><br>
+                <input type="text" id="subtopic" name="subtopic" value="Choose topic to subscribe to..."><br>
+                <input type="submit" value="Subscribe">
+            </form>
         </div>
     </div>
 </main>
 </body>
-
 <footer class="fixed-bottom">
       <div class="container-fluid">
           <div class="row">

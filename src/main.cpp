@@ -7,6 +7,14 @@
 #include <ArduinoOTA.h> // Enable OTA updates
 #include <ESPmDNS.h> // Connect by hostname
 #include <SPIFFS.h> // Enable file system
+#include <AsyncMqttClient.h> // MQTT Client
+extern "C" {
+	#include "freertos/FreeRTOS.h"
+	#include "freertos/timers.h"
+}
+
+#define MQTT_HOST IPAddress(192, 168, 1, 19)
+#define MQTT_PORT 1883
 
 // Variables for "Digital I/O" page, change to match your configuration
 const uint8_t buttonPin = 2; // the number of the pushbutton pin
@@ -14,9 +22,18 @@ const uint8_t ledPin =  13; // the number of the LED pin
 String outputState = "None"; // output state
 
 // Variables for "Variables" example, change to match your configuration
-String postMsg = "None"; // the number of the pushbutton pin
+String postMsg = "None";
 
+// Variables for "MQTT" example, change to match your configuration
+String pubMsg = "None"; // message to publish
+String pubTopic = "None"; // topic to publish to
+String subTopic = "None"; // topic to subscribe to
+
+// Library classes
 AsyncWebServer server(80);
+AsyncMqttClient mqttClient;
+TimerHandle_t mqttReconnectTimer;
+TimerHandle_t wifiReconnectTimer;
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
@@ -35,8 +52,8 @@ String processor(const String& var) {
 void SetupServer() {
   Serial.print('Configuring webserver...');
   // Index/home page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", String(), false, processor);
+  server.on("^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html");
   });
 
   // Route to load style.css file
@@ -50,34 +67,60 @@ void SetupServer() {
   });
 
   // Route to load I/O page
-  server.on("/io", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
   // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("/io", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/io$|^(\/io\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("output", true)) {
         outputState = request->getParam("output", true)->value();
     }
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
-  // Route to load web page
-  server.on("/web", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
   });
 
   // Route to load variable page
-  server.on("/variables", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/variables$|^(\/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/variables.html", String(), false, processor);
   });
 
+  // Route to load variable page
+  server.on("^\/mqtt$|^(\/mqtt\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
+  });
+
   // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("/variables", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/variables$|^(\/variables\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("postInt", true)) {
         postMsg = request->getParam("postInt", true)->value();
     }
     request->send(SPIFFS, "/variables.html", String(), false, processor);
+  });
+
+  // Send a POST request to <IP>/post with a form field message set to <message>
+  server.on("^\/mqtt$|^(\/mqtt\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("pubmsg", true)) {
+      pubMsg = request->getParam("pubmsg", true)->value();
+      if (request->hasParam("pubtopic", true)) {
+        pubTopic = request->getParam("pubtopic", true)->value();
+      }
+      mqttClient.publish(pubTopic.c_str(), 0, true, pubMsg.c_str());
+      Serial.print("Message: ");
+      Serial.print(pubMsg);
+      Serial.print(", Topic: ");
+      Serial.println(pubTopic);
+    }
+    if (request->hasParam("subtopic", true)) {
+      subTopic = request->getParam("subtopic", true)->value();
+      mqttClient.subscribe(subTopic.c_str(), 0);
+      Serial.print("Topic: ");
+      Serial.println(subTopic);
+    }
+    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
   server.onNotFound(notFound);
@@ -135,9 +178,72 @@ void SetupWiFi() {
   }
 }
 
+void onMqttConnect(bool sessionPresent) {
+  Serial.println("Connected to MQTT.");
+  Serial.print("Session present: ");
+  Serial.println(sessionPresent);
+  uint16_t packetIdSub = mqttClient.subscribe("test/lol", 2);
+  Serial.print("Subscribing at QoS 2, packetId: ");
+  Serial.println(packetIdSub);
+  mqttClient.publish("test/lol", 0, true, "test 1");
+  Serial.println("Publishing at QoS 0");
+  uint16_t packetIdPub1 = mqttClient.publish("test/lol", 1, true, "test 2");
+  Serial.print("Publishing at QoS 1, packetId: ");
+  Serial.println(packetIdPub1);
+  uint16_t packetIdPub2 = mqttClient.publish("test/lol", 2, true, "test 3");
+  Serial.print("Publishing at QoS 2, packetId: ");
+  Serial.println(packetIdPub2);
+}
+
+void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
+  Serial.println("Disconnected from MQTT.");
+
+  if (WiFi.isConnected()) {
+    xTimerStart(mqttReconnectTimer, 0);
+  }
+}
+
+void onMqttSubscribe(uint16_t packetId, uint8_t qos) {
+  Serial.println("Subscribe acknowledged.");
+  Serial.print("  packetId: ");
+  Serial.println(packetId);
+  Serial.print("  qos: ");
+  Serial.println(qos);
+}
+
+void onMqttUnsubscribe(uint16_t packetId) {
+  Serial.println("Unsubscribe acknowledged.");
+  Serial.print("  packetId: ");
+  Serial.println(packetId);
+}
+
+void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+  Serial.println("Publish received.");
+  Serial.print("  topic: ");
+  Serial.println(topic);
+  Serial.print("  qos: ");
+  Serial.println(properties.qos);
+  Serial.print("  dup: ");
+  Serial.println(properties.dup);
+  Serial.print("  retain: ");
+  Serial.println(properties.retain);
+  Serial.print("  len: ");
+  Serial.println(len);
+  Serial.print("  index: ");
+  Serial.println(index);
+  Serial.print("  total: ");
+  Serial.println(total);
+}
+
+void onMqttPublish(uint16_t packetId) {
+  Serial.println("Publish acknowledged.");
+  Serial.print("  packetId: ");
+  Serial.println(packetId);
+}
+
 // Setup sequence
 void setup() {
-  delay(1000); // pwrLevel-up safety delay
+  delay(5000); // pwrLevel-up safety delay
   
   // Start serial server and connect to WiFi
   Serial.begin(115200);
@@ -157,9 +263,18 @@ void setup() {
   }
   // Initialize SPIFFS
   if(!SPIFFS.begin(true)){
-    Serial.println("An Error has occurred while mounting SPIFFS");
+    Serial.println("An error has occurred while mounting SPIFFS");
     ESP.restart();
   }
+  mqttClient.onConnect(onMqttConnect);
+  mqttClient.onDisconnect(onMqttDisconnect);
+  mqttClient.onSubscribe(onMqttSubscribe);
+  mqttClient.onUnsubscribe(onMqttUnsubscribe);
+  mqttClient.onMessage(onMqttMessage);
+  mqttClient.onPublish(onMqttPublish);
+  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  mqttClient.connect();
+  mqttClient.subscribe("jetson", 0);
 
   pinMode(ledPin, OUTPUT); // initialize the LED pin as an output:
   pinMode(buttonPin, INPUT); // initialize the pushbutton pin as an input:

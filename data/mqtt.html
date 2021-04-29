@@ -30,15 +30,15 @@
     <div class="row justify-content-center">
         <div class="controls col-4 col-md-2 align-self-center text-center">
             <h3>Publish</h3>
-            <form action="/mqtt.html" method="post">
+            <form action="/mqtt/pub" method="post">
                 <label for="pubmsg">Message:</label><br>
                 <input type="text" id="pubmsg" name="pubmsg" value="Enter message..."><br>
                 <label for="pubtopic">Topic:</label><br>
-                <input type="text" id="subtopic" name="subtopic" value="Choose topic..."><br><br>
+                <input type="text" id="pubtopic" name="pubtopic" value="Choose topic..."><br><br>
                 <input type="submit" value="Publish">
             </form> 
             <h3>Subscribe</h3>
-            <form action="/mqtt.html" method="post">
+            <form action="/mqtt/sub" method="post">
                 <label for="subtopic">Topic:</label><br>
                 <input type="text" id="subtopic" name="subtopic" value="Choose topic to subscribe to..."><br>
                 <input type="submit" value="Subscribe">

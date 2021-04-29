@@ -7,6 +7,8 @@
 #include <ArduinoOTA.h> // Enable OTA updates
 #include <ESPmDNS.h> // Connect by hostname
 #include <SPIFFS.h> // Enable file system
+#include <PubSubClient.h> // Enable MQTT
+#include <ArduinoJson.h> // Handle JSON messages
 
 // Variables for "Digital I/O" page, change to match your configuration
 const uint8_t buttonPin = 2; // the number of the pushbutton pin
@@ -16,8 +18,16 @@ String outputState = "None"; // output state
 // Variables for "Variables" example, change to match your configuration
 String postMsg = "None";
 
+// Variables for "MQTT" example, change to match your configuration
+String pubMsg = "None";
+String pubTopic = "None";
+String subTopic = "None";
+
 // Library classes
 AsyncWebServer server(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
+StaticJsonDocument<200> doc;
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
@@ -25,11 +35,11 @@ void notFound(AsyncWebServerRequest *request) {
 
 // SPIFFS uses processor to replace HTML text with variables
 String processor(const String& var) {
-  if(var == "INPUT_NUMBER") {return String(buttonPin);}
-  if(var == "INPUT_STATE") {return String(digitalRead(buttonPin));}
-  if(var == "OUTPUT_NUMBER") {return String(ledPin);}
-  if(var == "OUTPUT_STATE") {return outputState;}
-  if(var == "POST_INT") {return postMsg;}
+  if(var == "INPUT_NUMBER") { return String(buttonPin); }
+  if(var == "INPUT_STATE") { return String(digitalRead(buttonPin)); }
+  if(var == "OUTPUT_NUMBER") { return String(ledPin); }
+  if(var == "OUTPUT_STATE") { return outputState; }
+  if(var == "POST_INT") { return postMsg; }
 }
 
 // Set up server callback functions
@@ -56,7 +66,7 @@ void SetupServer() {
   });
 
   // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("^\/io$|^(\/io\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/io$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("output", true)) {
         outputState = request->getParam("output", true)->value();
     }
@@ -77,12 +87,38 @@ void SetupServer() {
     request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
-  // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("^\/variables$|^(\/variables\.html)$", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^\/variables$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("postInt", true)) {
         postMsg = request->getParam("postInt", true)->value();
     }
     request->send(SPIFFS, "/variables.html", String(), false, processor);
+  });
+
+  server.on("^\/mqtt\/pub$", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("pubmsg", true)) {
+      pubMsg = request->getParam("pubmsg", true)->value();
+    } else {
+      Serial.println('No message entered');
+      return;
+    }
+    if (request->hasParam("pubtopic", true)) {
+      pubTopic = request->getParam("pubtopic", true)->value();
+    } else { 
+      Serial.println('No topic entered');
+      return;
+    }
+    bool published = client.publish(pubTopic.c_str(), pubMsg.c_str());
+    if(!published) { Serial.println('Failed to publish!'); }
+    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
+  });
+
+  server.on("^\/mqtt\/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("subtopic", true)) {
+      subTopic = request->getParam("subtopic", true)->value();
+      bool subscribed = client.subscribe(subTopic.c_str());
+      if(!subscribed) { Serial.println('Failed to subscribe!'); }
+    } else { return; }
+    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
   server.onNotFound(notFound);
@@ -139,6 +175,57 @@ void SetupWiFi() {
   }
 }
 
+// MQTT Handling functions
+// https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_basic/mqtt_basic.ino
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  char message[length + 1];
+  strncpy(message, (char*)payload, length);
+  message[length] = '\0';
+  DeserializationError error = deserializeJson(doc, message);
+  if (error) {
+    Serial.println(error.f_str());
+    return;
+  }
+  //const char* current_time = doc["time"];
+  Serial.print("Message: ");
+  Serial.println(message);
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP32-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("/home/status/esp32", "Hello world!");
+      // ... and resubscribe
+      client.subscribe("/home/status/time");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+// Initialize and setup MQTT client then connect
+// https://pubsubclient.knolleary.net/
+void SetupMQTT() {
+  client.setServer("192.168.1.45",1883);
+  client.setCallback(callback);
+  reconnect();
+}
+
 // Setup sequence
 void setup() {
   delay(5000); // pwrLevel-up safety delay
@@ -160,10 +247,12 @@ void setup() {
     ESP.restart();
   }
   // Initialize SPIFFS
-  if(!SPIFFS.begin(true)){
+  if(!SPIFFS.begin(true)) {
     Serial.println("An error has occurred while mounting SPIFFS");
     ESP.restart();
   }
+  // Subscribe to home MQTT broker
+  SetupMQTT();
 
   pinMode(ledPin, OUTPUT); // initialize the LED pin as an output:
   pinMode(buttonPin, INPUT); // initialize the pushbutton pin as an input:
@@ -172,4 +261,6 @@ void setup() {
 // Main loop
 void loop() {
   ArduinoOTA.handle();
+  if (!client.connected()) { reconnect(); }
+  else { client.loop(); }
 }

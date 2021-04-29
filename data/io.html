@@ -33,7 +33,7 @@
         <div class="col-4 col-md-2 align-self-center text-center">
             <h3>Input %INPUT_NUMBER%: %INPUT_STATE%</h3>
             <h3>Output %OUTPUT_NUMBER%: %OUTPUT_STATE%</h3>
-            <form action="/io.html" method="post">
+            <form action="/io" method="post">
                 <select name="output" class="form-control" id="output" onchange="if(this.value!=0) {this.form.submit();}">
                     <option value=0>Set DO%OUTPUT_NUMBER%...</option>
                     <option value="LOW">Off</option>

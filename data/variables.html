@@ -6,20 +6,15 @@
     <link href="/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="/app/Template.js" type="text/babel"></script>
     <title>uServer - Dev</title>
 </head>
 
 <body>
-<header>
-    <div class="navbar navbar-dark bg-dark shadow px-5">
-        <a href="/" class="navbar-brand px-3">About</a>
-        <a href="/io.html" class="navbar-brand px-3">Digital I/O</a>
-        <a href="/variables.html" class="navbar-brand px-3">
-            <strong>Variables</strong></a>
-        <a href="/mqtt.html" class="navbar-brand px-3">MQTT</a>
-        <a href="/web.html" class="navbar-brand px-3">Webpages</a>
-    </div>
-</header>
+<header id="nav"></header>
 <main class="container-fluid">
     <div class="row p-5 justify-content-center">
         <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
@@ -47,16 +42,8 @@
         </div>
     </div>
 </main>
+<footer id="footer"></footer>
 </body>
-<footer class="fixed-bottom">
-      <div class="container-fluid">
-          <div class="row">
-            <div class="col text-center">
-              <a href="http://advin.io/"><img src="https://drive.google.com/uc?id=19gtVzQTrjAqPSP7G1lUsRx8mjidmgyCA" width=150px></a>
-              <p style="font-size: 15px">Copyright © 2020 advin.io. All rights reserved.</p>
-            </div>
-          </div>
-      </div>
-</footer>
+
 </html>
 

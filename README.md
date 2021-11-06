@@ -8,12 +8,16 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 
 ## Features
 
+See [`FEATURES`](FEATURES.md) for full list of features and examples.
+
 * Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a> (Estonia)
-* Soft AP - <a href="https://github.com/tzapu/WiFiManager/">WiFiManager</a> (Asia)
+* Soft AP - <a href="https://github.com/tzapu/WiFiManager">WiFiManager</a> (Asia)
 * Over-the-air updates - <a href="https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA">Arduino OTA</a> (Slovakia)
-* <a href="https://pubsubclient.knolleary.net">MQTT</a> (UK) with <a href="https://pubsubclient.knolleary.net">JSON</a> parsing
+* <a href="https://pubsubclient.knolleary.net">MQTT</a> (UK) with <a href="https://arduinojson.org">JSON</a> parsing
 * File serving (.html, .css, .js) - <a href="https://github.com/pellepl/spiffs">SPIFFS</a> (Sweden)
 * Simple asynchronous web server - <a href="https://github.com/me-no-dev/ESPAsyncWebServer">ESPAsyncWebServer</a> (Bulgaria)
+* Dual core multi-tasking - <a href="https://freertos.org">FreeRTOS</a> (USA)
+* Responsive web interface - <a href="https://reactjs.org">React</a> and <a href="https://getbootstrap.com">Boostrap</a> via CDN
 
 ## Hardware Required
 
@@ -41,4 +45,5 @@ See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
 * Add additional security/authentication
 * Minimize energy consumption
 * Port to other platforms
-* Incorporate JavaScript
+* Add React UI
+* <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage</a>

@@ -22,12 +22,17 @@ String postMsg = "None";
 String pubMsg = "None";
 String pubTopic = "None";
 String subTopic = "None";
+const char MQTT_HOST[] = "10.0.0.28";
 
 // Library classes
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
 StaticJsonDocument<200> doc;
+
+// Dual-core tasks
+TaskHandle_t Task1;
+TaskHandle_t Task2;
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
@@ -46,7 +51,7 @@ String processor(const String& var) {
 void SetupServer() {
   Serial.print('Configuring webserver...');
   // Index/home page
-  server.on("^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/about$|^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
 
@@ -55,11 +60,11 @@ void SetupServer() {
     request->send(SPIFFS, "/style.css", "text/css");
   });
 
-  // Route to load script.js file
-  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script.js", "text/js");
+  // Route to load site template
+  server.on("/app/Template.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/Template.js", "text/js");
   });
-
+  
   // Route to load I/O page
   server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/io.html", String(), false, processor);
@@ -75,6 +80,10 @@ void SetupServer() {
 
   server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
+  });
+
+  server.on("^\/react$|^(\/react\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    request->send(SPIFFS, "/react.html", String(), false, processor);
   });
 
   // Route to load variable page
@@ -221,9 +230,34 @@ void reconnect() {
 // Initialize and setup MQTT client then connect
 // https://pubsubclient.knolleary.net/
 void SetupMQTT() {
-  client.setServer("192.168.1.45",1883);
+  client.setServer(MQTT_HOST, 1883);
   client.setCallback(callback);
   reconnect();
+}
+
+// WebServer Task 
+void Task1code( void * pvParameters ) {
+  Serial.print("Task1 running on core ");
+  Serial.println(xPortGetCoreID());
+
+  for(;;) {
+    ArduinoOTA.handle();
+    if (!client.connected()) { reconnect(); }
+    else { client.loop(); }
+    // DELETING THIS DELAY WILL CRASH THE MCU
+    delay(1);
+  }
+}
+
+// Comms Task 
+void Task2code( void * pvParameters ) {
+  Serial.print("Task2 running on core ");
+  Serial.println(xPortGetCoreID());
+
+  for(;;) {
+    Serial.println("Task2 heartbeat");
+    delay(10000);
+  }
 }
 
 // Setup sequence
@@ -254,13 +288,30 @@ void setup() {
   // Subscribe to home MQTT broker
   SetupMQTT();
 
+    //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
+  xTaskCreatePinnedToCore(
+                    Task1code,   /* Task function. */
+                    "WebServer",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+  delay(500); 
+
+  //create a task that will be executed in the Task2code() function, with priority 1 and executed on core 1
+  xTaskCreatePinnedToCore(
+                    Task2code,   /* Task function. */
+                    "Comms",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task2,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 1 */
+
   pinMode(ledPin, OUTPUT); // initialize the LED pin as an output:
   pinMode(buttonPin, INPUT); // initialize the pushbutton pin as an input:
 }
 
 // Main loop
-void loop() {
-  ArduinoOTA.handle();
-  if (!client.connected()) { reconnect(); }
-  else { client.loop(); }
-}
+void loop() { }

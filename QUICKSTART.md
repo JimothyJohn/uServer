@@ -2,14 +2,14 @@
 
 I use the <a href="https://platformio.org/platformio-ide">PlatformIO extension in VS Code</a>, but it's actually quicker to use the command line:
 
-```sh 
+```bash 
 # Install PlatformIO
-user@host:~$ python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
 ```
 
-OPTIONAL (Linux/Mac) - I also like to create the alias "platformio" to quickly activate the PlatformIO virtual environment on the command line:
+OPTIONAL (Linux) - I also like to create the alias "platformio" to quickly activate the PlatformIO virtual environment on the command line:
 
-```sh 
+```bash 
 # Create alias
 user@host:~$ echo "alias platformio=\". ~/.platformio/penv/bin/activate\"" >> ~/.bashrc && . ~/.bashrc
 # Try it out!
@@ -21,8 +21,8 @@ user@host:~$ platformio
 Configure [`platform.ini`](platform.ini) for USB upload:
 
 ```ini 
-upload_port = /dev/ttyUSB0 # CHANGE THIS IF NEEDED
-monitor_port = /dev/ttyUSB0 # CHANGE THIS IF NEEDED
+upload_port = /dev/ttyUSB0 # CHANGE THIS IF NOT ON LINUX
+monitor_port = /dev/ttyUSB0 # CHANGE THIS IF NOT ON LINUX
 monitor_speed = 115200
 # We'll add these later
 # upload_protocol = espota 
@@ -31,10 +31,10 @@ monitor_speed = 115200
 
 Move to root of repository and upload both the file system and program via IDE or command line as shown below (make sure penv is activated first):
 
-```sh
-(penv) user@host:~$ cd <uServer>
-(penv) user@host:<uServer>$ pio run -t uploadfs
-(penv) user@host:<uServer>$ pio run -t upload
+```bash
+(penv) user@host:~$ cd uServer
+(penv) user@host:~/uServer$ pio run -t uploadfs
+(penv) user@host:~/uServer$ pio run -t upload
 ```
 
 Go to your phone/PC's Wi-Fi settings and use access point "uServer" to connect the ESP32 to your Wi-Fi, then finalize your [`platform.ini`](platform.ini) configuration:

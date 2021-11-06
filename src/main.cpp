@@ -64,6 +64,11 @@ void SetupServer() {
   server.on("/app/Template.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/app/Template.js", "text/js");
   });
+
+  // Route to load variable script 
+  server.on("/app/Variables.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/Variables.js", "text/js");
+  });
   
   // Route to load I/O page
   server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){

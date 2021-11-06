@@ -9,7 +9,7 @@
     * <a href="https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_esp8266/mqtt_esp8266.ino">MQTT example</a>
     * <a href="https://github.com/bblanchon/ArduinoJson/blob/6.x/examples/JsonParserExample/JsonParserExample.ino">JSON example</a>
 * File serving (.html, .css, .js) - <a href="https://github.com/pellepl/spiffs">SPIFFS</a> (Sweden)
-    * <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/ESP_AsyncFSBrowser/ESP_AsyncFSBrowser.ino">SPIFF file server example</a>
+    * <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/ESP_AsyncFSBrowser/ESP_AsyncFSBrowser.ino">SPIFFS file server example</a>
 * Simple asynchronous web server - <a href="https://github.com/me-no-dev/ESPAsyncWebServer">ESPAsyncWebServer</a> (Bulgaria)
     * <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Webserver example</a>
 * Dual core multi-tasking - <a href="https://freertos.org">FreeRTOS</a> (USA)

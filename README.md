@@ -8,7 +8,7 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 
 ## Features
 
-See [`FEATURES`](FEATURES.md) for full list of features and examples.
+See [`Features`](FEATURES.md) for full list of features and examples.
 
 ## Hardware Required
 
@@ -20,7 +20,7 @@ See [`FEATURES`](FEATURES.md) for full list of features and examples.
 
 ## Installation
 
-See [`QUICKSTART`](QUICKSTART.md) to quickly get up and running.
+See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 
 ## To-do List
 

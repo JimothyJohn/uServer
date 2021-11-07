@@ -1,11 +1,9 @@
 // MQTT.js
 
-function MQTT(props) {
+function Publish(props) {
 
-  // const [payload, setPayload] = React.useState('Enter message...');
-  // const [topic, setTopic] = React.useState('/topic');
   const [message, setMessage] = React.useState({
-    payload: 'Enter message...',
+    payload: 'Hello world!',
     topic: '/topic',
   });
 
@@ -46,6 +44,52 @@ function MQTT(props) {
           </form>
         </div>
       </div>
+    </div>
+  )
+}
+
+function Connect(props) {
+
+  const [hostname, setHost] = React.useState("10.0.0.28");
+
+  function handleSubmit(event){
+    event.preventDefault();
+    axios.post('/mqtt/connect', {
+      host: hostname,
+    })
+    .then(function (response) {
+      console.log(response);
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+  };
+
+  return (
+    <div className="App">
+      <div className="row justify-content-center">
+        <div className="col-4 col-md-2 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="hostname">Enter message:</label>
+            <input
+              type="text"
+              value={hostname}
+              onChange={e => setHost(e.target.value)}
+              name="hostname"
+            />
+            <input type="submit" value="Connect" />
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MQTT(props) {
+  return (
+    <div className="App">
+      <Publish />
+      <Connect />
     </div>
   )
 }

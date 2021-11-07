@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="/app/Template.js" type="text/babel"></script>
+    <script src="/app/MQTT.js" type="text/babel"></script>
     <title>uServer - Dev</title>
 </head>
 
@@ -22,24 +23,7 @@
             <p class="lead text-muted pb-3">Publish messages and subscribe to topics!</p>
         </div>
     </div>
-    <div class="row justify-content-center">
-        <div class="controls col-4 col-md-2 align-self-center text-center">
-            <h3>Publish</h3>
-            <form action="/mqtt/pub" method="post">
-                <label for="pubmsg">Message:</label><br>
-                <input type="text" id="pubmsg" name="pubmsg" value="Enter message..."><br>
-                <label for="pubtopic">Topic:</label><br>
-                <input type="text" id="pubtopic" name="pubtopic" value="Choose topic..."><br><br>
-                <input type="submit" value="Publish">
-            </form> 
-            <h3>Subscribe</h3>
-            <form action="/mqtt/sub" method="post">
-                <label for="subtopic">Topic:</label><br>
-                <input type="text" id="subtopic" name="subtopic" value="Choose topic to subscribe to..."><br>
-                <input type="submit" value="Subscribe">
-            </form>
-        </div>
-    </div>
+    <div id="mqtt"></div>
 </main>
 <footer id="footer"></footer>
 </body>

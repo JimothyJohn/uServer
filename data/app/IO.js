@@ -1,12 +1,14 @@
-// Variables.js
+// IO.js
 
-function Variables(props) {
+function IO(props) {
 
-  const [count, setCount] = React.useState(0);
+  const [state, setState] = React.useState(0);
+  const stateArray = {"0": "LOW", "1": "HIGH"}
 
-  function sendCount(value) {
-    axios.post('/variables', {
-      postInt: value,
+  function handleChange(e){
+    setState(e.target.value);
+    axios.post('/io', {
+      output: state,
     })
     .then(function (response) {
       console.log(response);
@@ -14,12 +16,7 @@ function Variables(props) {
     .catch(function (error) {
       console.log(error);
     });
-  }
-
-  function handleChange(e){
-    setCount(e.target.value);
-    sendCount(e.target.value);
- };
+  };
 
   function handleSubmit(e){
     e.preventDefault();
@@ -30,16 +27,16 @@ function Variables(props) {
     <div className="App">
       <div className="row p-3 justify-content-center">
         <div className="col-6 col-md-4 align-self-center text-center">
-          <h2>Number selected: {count}</h2>
+          <h2>Output state: {stateArray[state]}</h2>
         </div>
       </div>
       <div className="row justify-content-center">
         <div className="col-4 col-md-2 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <select value={count} className="form-control" onChange={handleChange}>
-              <option value="0">Choose a number...</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
+            <select value={state} className="form-control" onChange={handleChange}>
+              <option>Choose a state...</option>
+              <option value="0">Low</option>
+              <option value="1">High</option>
             </select>
           </form>
         </div>
@@ -49,6 +46,6 @@ function Variables(props) {
 }
 
 ReactDOM.render(
-    <Variables />,
-    document.getElementById('variables')
+    <IO />,
+    document.getElementById('io')
 )

@@ -10,14 +10,12 @@ function NavBar(props) {
   // Classes for each module
   const navClass = "navbar navbar-dark bg-dark shadow px-5";
   const linkClass = "navbar-brand px-3";
-  // Possible URL endpoints (NOT ACTIVE YET)
   const linkList = [
     "/About",
     "/IO.html",
     "/Variables.html",
     "/MQTT.html",
     "/Web.html",
-    "/React.html",
   ];
 
   function RenderLink(link) {

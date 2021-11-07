@@ -13,16 +13,9 @@
 // Variables for "Digital I/O" page, change to match your configuration
 const uint8_t buttonPin = 2; // the number of the pushbutton pin
 const uint8_t ledPin =  13; // the number of the LED pin
-String outputState = "None"; // output state
-
-// Variables for "Variables" example, change to match your configuration
-String postMsg = "None";
 
 // Variables for "MQTT" example, change to match your configuration
-String pubMsg = "None";
-String pubTopic = "None";
 String subTopic = "None";
-const char MQTT_HOST[] = "10.0.0.28";
 
 // Library classes
 AsyncWebServer server(80);
@@ -42,83 +35,194 @@ void notFound(AsyncWebServerRequest *request) {
 String processor(const String& var) {
   if(var == "INPUT_NUMBER") { return String(buttonPin); }
   if(var == "INPUT_STATE") { return String(digitalRead(buttonPin)); }
-  if(var == "OUTPUT_NUMBER") { return String(ledPin); }
-  if(var == "OUTPUT_STATE") { return outputState; }
-  if(var == "POST_INT") { return postMsg; }
+}
+
+// MQTT Handling functions
+// https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_basic/mqtt_basic.ino
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  char message[length + 1];
+  strncpy(message, (char*)payload, length);
+  message[length] = '\0';
+  DeserializationError error = deserializeJson(doc, message);
+  if (error) {
+    Serial.println(error.f_str());
+    return;
+  }
+  //const char* current_time = doc["time"];
+  Serial.print("Message: ");
+  Serial.println(message);
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP32-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("/home/status/esp32", "Hello world!");
+      // ... and resubscribe
+      client.subscribe("/home/status/time");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+// Initialize and setup MQTT client then connect
+// https://pubsubclient.knolleary.net/
+void SetupMQTT(const char* hostname ) {
+  client.setServer(hostname, 1883);
+  client.setCallback(callback);
+  reconnect();
 }
 
 // Set up server callback functions
 void SetupServer() {
-  Serial.print('Configuring webserver...');
   // Index/home page
   server.on("^\/about$|^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
-
-  // Route to load style.css file
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/style.css", "text/css");
-  });
-
-  // Route to load site template
-  server.on("/app/Template.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/app/Template.js", "text/js");
-  });
   
-  // Route to load I/O page
+  // IO page
   server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
-  // Send a POST request to <IP>/post with a form field message set to <message>
-  server.on("^\/io$", HTTP_POST, [](AsyncWebServerRequest *request){
-    if (request->hasParam("output", true)) {
-        outputState = request->getParam("output", true)->value();
-    }
-    request->send(SPIFFS, "/io.html", String(), false, processor);
-  });
-
+  // Webpage
   server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
   });
 
-  server.on("^\/react$|^(\/react\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/react.html", String(), false, processor);
-  });
-
-  // Route to load variable page
+  // Variable page
   server.on("^\/variables$|^(\/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/variables.html", String(), false, processor);
   });
 
-  // Route to load variable page
+  // MQTT page
   server.on("^\/mqtt$|^(\/mqtt\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
-  server.on("^\/variables$", HTTP_POST, [](AsyncWebServerRequest *request){
-    if (request->hasParam("postInt", true)) {
-        postMsg = request->getParam("postInt", true)->value();
-    }
-    request->send(SPIFFS, "/variables.html", String(), false, processor);
+  // CSS file
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/style.css", "text/css");
   });
 
-  server.on("^\/mqtt\/pub$", HTTP_POST, [](AsyncWebServerRequest *request){
-    if (request->hasParam("pubmsg", true)) {
-      pubMsg = request->getParam("pubmsg", true)->value();
-    } else {
-      Serial.println('No message entered');
+  // Template script
+  server.on("/app/Template.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/Template.js", "text/js");
+  });
+
+  // Variable script
+  server.on("/app/Variables.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/Variables.js", "text/js");
+  });
+   
+  // IO script 
+  server.on("/app/IO.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/IO.js", "text/js");
+  });
+
+  // MQTT script 
+  server.on("/app/MQTT.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/app/MQTT.js", "text/js");
+  });
+
+  // IO JSON message parser 
+  server.on("^\/io$", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    DeserializationError error = deserializeJson(doc, data);
+    if (error) {
+      Serial.println(error.f_str());
       return;
     }
-    if (request->hasParam("pubtopic", true)) {
-      pubTopic = request->getParam("pubtopic", true)->value();
-    } else { 
-      Serial.println('No topic entered');
+    uint8_t outputState = doc["output"].as<uint8_t>();;
+    if (outputState) { digitalWrite(ledPin, outputState); }
+    else { digitalWrite(ledPin, outputState); }
+  });
+
+  // Variable JSON message parser 
+  server.on("^\/variables$", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    DeserializationError error = deserializeJson(doc, data);
+    if (error) {
+      Serial.println(error.f_str());
       return;
     }
-    bool published = client.publish(pubTopic.c_str(), pubMsg.c_str());
+    uint8_t adding = doc["postInt"].as<uint8_t>();;
+    Serial.print("postInt: ");
+    Serial.println(adding);
+  });
+
+  // Variable JSON message parser 
+  server.on("^\/mqtt\/connect$", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    DeserializationError error = deserializeJson(doc, data);
+    if (error) {
+      Serial.println(error.f_str());
+      return;
+    }
+    const char* hostname = doc["host"];
+    SetupMQTT(hostname);
+  });
+
+
+  // Variable JSON message parser 
+  server.on("^\/mqtt\/pub$", HTTP_POST, [](AsyncWebServerRequest *request)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+  {
+    delay(1);
+  },
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  {
+    DeserializationError error = deserializeJson(doc, data);
+    if (error) {
+      Serial.println(error.f_str());
+      return;
+    }
+    const char* payload = doc["payload"];
+    const char* topic = doc["topic"];
+    bool published = client.publish(topic, payload);
     if(!published) { Serial.println('Failed to publish!'); }
-    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
   server.on("^\/mqtt\/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -184,57 +288,6 @@ void SetupWiFi() {
   }
 }
 
-// MQTT Handling functions
-// https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_basic/mqtt_basic.ino
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  char message[length + 1];
-  strncpy(message, (char*)payload, length);
-  message[length] = '\0';
-  DeserializationError error = deserializeJson(doc, message);
-  if (error) {
-    Serial.println(error.f_str());
-    return;
-  }
-  //const char* current_time = doc["time"];
-  Serial.print("Message: ");
-  Serial.println(message);
-}
-
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "ESP32-";
-    clientId += String(random(0xffff), HEX);
-    // Attempt to connect
-    if (client.connect(clientId.c_str())) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      client.publish("/home/status/esp32", "Hello world!");
-      // ... and resubscribe
-      client.subscribe("/home/status/time");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
-// Initialize and setup MQTT client then connect
-// https://pubsubclient.knolleary.net/
-void SetupMQTT() {
-  client.setServer(MQTT_HOST, 1883);
-  client.setCallback(callback);
-  reconnect();
-}
-
 // WebServer Task 
 void Task1code( void * pvParameters ) {
   Serial.print("Task1 running on core ");
@@ -242,10 +295,9 @@ void Task1code( void * pvParameters ) {
 
   for(;;) {
     ArduinoOTA.handle();
-    if (!client.connected()) { reconnect(); }
-    else { client.loop(); }
+    if (client.connected()) { client.loop(); }
     // DELETING THIS DELAY WILL CRASH THE MCU
-    delay(1);
+    delay(10);
   }
 }
 
@@ -285,10 +337,8 @@ void setup() {
     Serial.println("An error has occurred while mounting SPIFFS");
     ESP.restart();
   }
-  // Subscribe to home MQTT broker
-  SetupMQTT();
 
-    //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
+  //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
                     Task1code,   /* Task function. */
                     "WebServer",     /* name of task. */
@@ -297,7 +347,6 @@ void setup() {
                     1,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
                     0);          /* pin task to core 0 */                  
-  delay(500); 
 
   //create a task that will be executed in the Task2code() function, with priority 1 and executed on core 1
   xTaskCreatePinnedToCore(

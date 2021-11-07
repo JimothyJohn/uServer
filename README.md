@@ -29,3 +29,4 @@ See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 * Minimize energy consumption
 * Port to other platforms
 * <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage</a>
+* Streamline JSON parsing on WebServer

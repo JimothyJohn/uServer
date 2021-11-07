@@ -297,7 +297,7 @@ void Task1code( void * pvParameters ) {
     ArduinoOTA.handle();
     if (client.connected()) { client.loop(); }
     // DELETING THIS DELAY WILL CRASH THE MCU
-    delay(1);
+    delay(10);
   }
 }
 
@@ -347,7 +347,6 @@ void setup() {
                     1,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
                     0);          /* pin task to core 0 */                  
-  delay(500); 
 
   //create a task that will be executed in the Task2code() function, with priority 1 and executed on core 1
   xTaskCreatePinnedToCore(

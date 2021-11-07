@@ -39,8 +39,6 @@ void notFound(AsyncWebServerRequest *request) {
 String processor(const String& var) {
   if(var == "INPUT_NUMBER") { return String(buttonPin); }
   if(var == "INPUT_STATE") { return String(digitalRead(buttonPin)); }
-  if(var == "OUTPUT_NUMBER") { return String(ledPin); }
-  if(var == "OUTPUT_STATE") { return outputState; }
 }
 
 // Set up server callback functions
@@ -157,31 +155,9 @@ void SetupServer() {
     }
     const char* payload = doc["payload"];
     const char* topic = doc["topic"];
-    Serial.print("Message: "); Serial.println(payload);
-    Serial.print("Topic: "); Serial.println(topic);
     bool published = client.publish(topic, payload);
     if(!published) { Serial.println('Failed to publish!'); }
   });
-
-  /*
-  server.on("^\/mqtt\/pub$", HTTP_POST, [](AsyncWebServerRequest *request){
-    if (request->hasParam("pubmsg", true)) {
-      pubMsg = request->getParam("pubmsg", true)->value();
-    } else {
-      Serial.println('No message entered');
-      return;
-    }
-    if (request->hasParam("pubtopic", true)) {
-      pubTopic = request->getParam("pubtopic", true)->value();
-    } else { 
-      Serial.println('No topic entered');
-      return;
-    }
-    bool published = client.publish(pubTopic.c_str(), pubMsg.c_str());
-    if(!published) { Serial.println('Failed to publish!'); }
-    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
-  });
-  */
 
   server.on("^\/mqtt\/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("subtopic", true)) {

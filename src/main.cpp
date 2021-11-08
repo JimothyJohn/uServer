@@ -91,7 +91,7 @@ void SetupMQTT(const char* hostname ) {
 // Set up server callback functions
 void SetupServer() {
   // Index/home page
-  server.on("^\/about$|^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
   

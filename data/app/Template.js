@@ -3,7 +3,7 @@
 const pathname = window.location.pathname //returns the current url minus the domain name
 
 function TrimPath(path) {
-    return path.replace(/\//g, '').replace(/\.html/g, '');
+    return path.replace(/.\//g, '').replace(/\.html/g, '');
 }
 
 function NavBar(props) {
@@ -11,7 +11,7 @@ function NavBar(props) {
   const navClass = "navbar navbar-dark bg-dark shadow px-5";
   const linkClass = "navbar-brand px-3";
   const linkList = [
-    "/About",
+    "/Index.html",
     "/IO.html",
     "/Variables.html",
     "/MQTT.html",
@@ -62,8 +62,6 @@ ReactDOM.render(
 )
 
 ReactDOM.render(
-    <BrowserRouter >
-      <NavBar />
-    </BrowserRouter>,
+    <NavBar />,
     document.getElementById('nav')
 );

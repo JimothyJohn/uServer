@@ -11,11 +11,11 @@ function NavBar(props) {
   const navClass = "navbar navbar-dark bg-dark shadow px-5";
   const linkClass = "navbar-brand px-3";
   const linkList = [
-    "/Index.html",
-    "/IO.html",
-    "/Variables.html",
-    "/MQTT.html",
-    "/Web.html",
+    "./Index.html",
+    "./IO.html",
+    "./Variables.html",
+    "./MQTT.html",
+    "./Web.html",
   ];
 
   function RenderLink(link) {

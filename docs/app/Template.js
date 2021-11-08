@@ -3,7 +3,7 @@
 const pathname = window.location.pathname //returns the current url minus the domain name
 
 function TrimPath(path) {
-    return path.replace(/.\//g, '').replace(/\.html/g, '');
+    return path.replace(/\.\//g, '').replace(/\.html/g, '');
 }
 
 function NavBar(props) {

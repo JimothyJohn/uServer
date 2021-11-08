@@ -62,6 +62,8 @@ ReactDOM.render(
 )
 
 ReactDOM.render(
-    <NavBar />,
+    <BrowserRouter >
+      <NavBar />
+    </BrowserRouter>,
     document.getElementById('nav')
 );

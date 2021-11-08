@@ -19,7 +19,7 @@ function NavBar(props) {
   ];
 
   function RenderLink(link) {
-    return(
+    return (
       <a href={link.url} className={linkClass}>{link.name}</a>
     );
   }

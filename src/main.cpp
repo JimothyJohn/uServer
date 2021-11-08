@@ -91,27 +91,27 @@ void SetupMQTT(const char* hostname ) {
 // Set up server callback functions
 void SetupServer() {
   // Index/home page
-  server.on("^\/$|^(\/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^/$|^(/index\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
   
   // IO page
-  server.on("^\/io$|^(\/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^/io$|^(/io\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/io.html", String(), false, processor);
   });
 
   // Webpage
-  server.on("^\/web$|^(\/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
+  server.on("^/web$|^(/web\.html)$", HTTP_GET, [] (AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/web.html", String(), false, processor);
   });
 
   // Variable page
-  server.on("^\/variables$|^(\/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^/variables$|^(/variables\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/variables.html", String(), false, processor);
   });
 
   // MQTT page
-  server.on("^\/mqtt$|^(\/mqtt\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("^/mqtt$|^(/mqtt\.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/mqtt.html", String(), false, processor);
   });
 
@@ -141,7 +141,7 @@ void SetupServer() {
   });
 
   // IO JSON message parser 
-  server.on("^\/io$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("^/io$", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -156,13 +156,13 @@ void SetupServer() {
       Serial.println(error.f_str());
       return;
     }
-    uint8_t outputState = doc["output"].as<uint8_t>();;
-    if (outputState) { digitalWrite(ledPin, outputState); }
-    else { digitalWrite(ledPin, outputState); }
+    uint8_t outputState = doc["state"].as<uint8_t>();;
+    uint8_t outputPin = doc["point"].as<uint8_t>();;
+    digitalWrite(outputPin, outputState);
   });
 
   // Variable JSON message parser 
-  server.on("^\/variables$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("^/variables$", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -183,7 +183,7 @@ void SetupServer() {
   });
 
   // Variable JSON message parser 
-  server.on("^\/mqtt\/connect$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("^/mqtt/connect$", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -204,28 +204,7 @@ void SetupServer() {
 
 
   // Variable JSON message parser 
-  server.on("^\/mqtt\/pub$", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    delay(1);
-  },
-  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
-  {
-    delay(1);
-  },
-  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-  {
-    DeserializationError error = deserializeJson(doc, data);
-    if (error) {
-      Serial.println(error.f_str());
-      return;
-    }
-    const char* payload = doc["payload"];
-    const char* topic = doc["topic"];
-    bool published = client.publish(topic, payload);
-    if(!published) { Serial.println('Failed to publish!'); }
-  });
-
-  server.on("^\/mqtt\/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("^/mqtt/mqtt/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("subtopic", true)) {
       subTopic = request->getParam("subtopic", true)->value();
       bool subscribed = client.subscribe(subTopic.c_str());

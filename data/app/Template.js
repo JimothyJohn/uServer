@@ -20,7 +20,8 @@ function NavBar(props) {
 
   function RenderLink(link) {
     return(
-      <a href={link.url} className={linkClass}>{link.name}</a>
+      <li><a href={link.url} className="dropdown-item">{link.name}</a></li>
+      // <li><button className="dropdown-item" value={link.name}></button></li>
     );
   }
 
@@ -37,9 +38,24 @@ function NavBar(props) {
   }
 
   return (
-        <div className={navClass}>
-            {ListLinks(linkList)}
-        </div>
+          <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow px-5">
+            <div className="container-fluid">
+              <div className="collapse navbar-collapse" id="navbarSupportedContent">
+
+                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                  <li className="nav-item dropdown">
+                    <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Features
+                    </a>
+                    <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
+                      {ListLinks(linkList)}
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+              <p className="gray">Yo</p>
+            </div>
+          </nav>
   );
 }
 

@@ -1,13 +1,9 @@
-# Notes
 
-Add './' to links on Line 13 of [app/Templates.js](app/Templates.js) to make functional of Pages.
+# Github Page 
 
-```js
-  const linkList = [
-    "./Index.html",
-    "./IO.html",
-    "./Variables.html",
-    "./MQTT.html",
-    "./Web.html",
-  ];
+Copy from data folder and change sources "/" to relative paths "./" like below:
+
+```html
+<link href="./style.css" rel="stylesheet">
+<script src="./App.js" type="text/babel"></script>
 ```

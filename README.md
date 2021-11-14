@@ -1,10 +1,8 @@
-# uServer
-
-Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
-
-## Sample Page
 
 ![Webpage screenshot](docs/Webpage.png)
+# uServer
+
+Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly! Check out this project's Github Page <a href="https://jimothyjohn.github.io/uServer/">here</a> for a live demo.
 
 ## Features
 

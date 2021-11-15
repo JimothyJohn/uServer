@@ -1,8 +1,8 @@
-
-![Webpage screenshot](docs/Webpage.png)
 # uServer
 
-Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly! Check out this project's Github Page <a href="https://jimothyjohn.github.io/uServer/">here</a> for a live demo.
+Template for rapid IoT development on ESP32. Build webpages fast and exchange data quickly!
+
+## <a href="https://jimothyjohn.github.io/uServer/">Live demo</a>
 
 ## Features
 
@@ -23,8 +23,7 @@ See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 ## To-do List
 
 * Migrate to LittleFS (SPIFFS deprecated)
-* Add additional security/authentication
-* Minimize energy consumption
+* Add security/authentication
 * Port to other platforms
 * <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage</a>
 * Streamline JSON parsing on WebServer

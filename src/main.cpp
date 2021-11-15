@@ -31,12 +31,6 @@ void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
-// SPIFFS uses processor to replace HTML text with variables
-String processor(const String& var) {
-  if(var == "INPUT_NUMBER") { return String(buttonPin); }
-  if(var == "INPUT_STATE") { return String(digitalRead(buttonPin)); }
-}
-
 // MQTT Handling functions
 // https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_basic/mqtt_basic.ino
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -91,7 +85,7 @@ void SetupMQTT(const char* hostname ) {
 // Set up server callback functions
 void SetupServer() {
   // Index/home page
-  server.on("/|/index.html)$", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html");
   });
   
@@ -187,16 +181,16 @@ void SetupServer() {
     const char* payload = doc["payload"];
     const char* topic = doc["topic"];
     bool published = client.publish(topic, payload);
-    if(!published) { Serial.println('Failed to publish!'); }
+    if(!published) { Serial.println("Failed to publish!"); }
   });
 
   server.on("/mqtt/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("subtopic", true)) {
       subTopic = request->getParam("subtopic", true)->value();
       bool subscribed = client.subscribe(subTopic.c_str());
-      if(!subscribed) { Serial.println('Failed to subscribe!'); }
+      if(!subscribed) { Serial.println("Failed to subscribe!"); }
     } else { return; }
-    request->send(SPIFFS, "/mqtt.html", String(), false, processor);
+    request->send(SPIFFS, "/mqtt.html", String(), false);
   });
 
   server.onNotFound(notFound);
@@ -205,7 +199,7 @@ void SetupServer() {
 
 // Enable OTA updates
 void SetupOTA() {
-  Serial.print('Configuring OTA...');
+  Serial.print("Configuring OTA...");
   ArduinoOTA
     .onStart([]() {
       String type;
@@ -239,7 +233,7 @@ void SetupOTA() {
 // Initialize Wi-Fi manager and connect to Wi-Fi
 // https://github.com/khoih-prog/ESP_WiFiManager
 void SetupWiFi() {
-  Serial.print('Configuring WiFi...');
+  Serial.print("Configuring WiFi...");
   Serial.print(F("\nStarting AutoConnect_ESP32_minimal on ")); Serial.println(ARDUINO_BOARD); 
   Serial.println(ESP_WIFIMANAGER_VERSION);
   ESP_WiFiManager wm("uServer");
@@ -284,7 +278,7 @@ void setup() {
   // Start serial server and connect to WiFi
   Serial.begin(115200);
   while (!Serial);
-  Serial.print('Serial alive!');
+  Serial.print("Serial alive!");
 
   // Uses soft AP to connect to Wi-Fi (if saved credentials aren't valid)
   SetupWiFi();

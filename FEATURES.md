@@ -14,6 +14,6 @@
     * <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Webserver example</a>
 * Dual core multi-tasking - <a href="https://freertos.org">FreeRTOS</a> (USA)
     * <a href="https://microcontrollerslab.com/esp32-dual-core-freertos-arduino-ide/">Task handler example</a>
-* Responsive web interface - <a href="https://reactjs.org">React</a> and <a href="https://getbootstrap.com">Boostrap</a> via CDN
+* Responsive web interface. Single page app powered by <a href="https://reactjs.org">React</a> and <a href="https://getbootstrap.com">Boostrap</a> via CDN
     * <a href="https://reactjs.org/tutorial/tutorial.html">React tutorial</a>
     * <a href="https://getbootstrap.com/docs/5.0/getting-started/introduction/">Bootstrap docs</a>

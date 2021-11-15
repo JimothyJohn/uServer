@@ -4,4 +4,5 @@ By default the SPIFFS library utilizes the [/data/](/data/) directory.
 
 ## To-do list
 
-* Convert to single page app
+* Create axios GET requests to update browser with Arduino data
+* Fill out UI and increase responsiveness

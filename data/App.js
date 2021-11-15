@@ -1,19 +1,20 @@
-// Template.js
+// App.js
 const { BrowserRouter, Switch, Route, Link } = ReactRouterDOM;
+const { Container, Row, Col, Navbar } = ReactBootstrap;
 
 function NavBar(props) {
   // Classes for each module
-  const navClass = "navbar navbar-dark bg-dark shadow px-5";
+  const navClass = "navbar-dark shadow px-5";
   const linkClass = "navbar-brand px-3";
 
   return (
     <header>
-      <div className={navClass}>
+      <Navbar bg="dark" className={navClass}>
         <Link to="/" className={linkClass}>About</Link>
         <Link to="/io" className={linkClass}>Digital I/O</Link>
         <Link to="/variables" className={linkClass}>Variables</Link>
         <Link to="/mqtt" className={linkClass}>MQTT</Link>
-      </div>
+      </Navbar>
     </header>
   );
 }
@@ -21,29 +22,29 @@ function NavBar(props) {
 function Footer(props) {
     return(
       <footer>
-        <div className="fixed-bottom container-fluid">
-            <div className="row">
-                <div className="col text-center">
-                <a href="http://advin.io/"><img src="https://drive.google.com/uc?id=19gtVzQTrjAqPSP7G1lUsRx8mjidmgyCA" width="150px" /></a>
-                <p>Copyright © 2020 advin.io. All rights reserved.</p>
-                </div>
-            </div>
-        </div>
+        <Container fluid="sm" className="fixed-bottom">
+          <Row>
+            <Col className="text-center">
+              <a href="http://advin.io/"><img src="https://drive.google.com/uc?id=19gtVzQTrjAqPSP7G1lUsRx8mjidmgyCA" width="150px" /></a>
+              <p>Copyright © 2020 advin.io. All rights reserved.</p>
+            </Col>
+          </Row>
+        </Container>
       </footer>
     )
 }
 
 function About(props) {
   return (
-    <main class="container-fluid">
-        <div class="row p-5 justify-content-center">
-            <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
-                <h1 class="p-4 headline"><strong>µServer</strong></h1>
-                <p class="lead text-muted pb-3">µServer is a template for rapid networking of MCU's.<br />
-                Use the navbar to see what you can do!</p>
-            </div>
-        </div>
-    </main>
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+          <h1 className="p-4 headline"><strong>µServer</strong></h1>
+          <p className="lead text-muted pb-3">µServer is a template for rapid networking of MCU's.<br />
+          Use the navbar to see what you can do!</p>
+        </Col>
+      </Row>
+    </Container>
   )
 }
 
@@ -71,23 +72,23 @@ function IO(props) {
   };
 
   return (
-    <div className="container-fluid">
-      <div class="row p-5 justify-content-center">
-      <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
-          <h1 class="p-4 headline"><strong>Digital I/O</strong></h1>
-          <p class="lead text-muted pb-3">
-            Use buttons to set outputs and text to
-            read inputs all via web browser.
-          </p>
-      </div>
-      </div>
-      <div className="row p-3 justify-content-center">
-        <div className="col-6 col-md-4 align-self-center text-center">
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+            <h1 className="p-4 headline"><strong>Digital I/O</strong></h1>
+            <p className="lead text-muted pb-3">
+              Use buttons to set outputs and text to
+              read inputs all via web browser.
+            </p>
+        </Col>
+      </Row>
+      <Row className="p-3 justify-content-center">
+        <Col className="align-self-center text-center">
           <h2>Output state: {stateArray[state]}</h2>
-        </div>
-      </div>
-      <div className="row justify-content-center">
-        <div className="col-4 col-md-2 align-self-center text-center">
+        </Col>
+      </Row>
+      <Row className="justify-content-center">
+        <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
             <select value={state} className="form-control" onChange={handleChange}>
               <option>Choose a state...</option>
@@ -95,9 +96,9 @@ function IO(props) {
               <option value="1">High</option>
             </select>
           </form>
-        </div>
-      </div>
-    </div>
+        </Col>
+      </Row>
+    </Container>
   )
 }
 
@@ -128,23 +129,23 @@ function Variables(props) {
   };
 
   return (
-    <div class="container-fluid">
-      <div class="row p-5 justify-content-center">
-        <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
-          <h1 class="p-4 headline"><strong>Variables</strong></h1>
-          <p class="lead text-muted pb-3">
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+          <h1 className="p-4 headline"><strong>Variables</strong></h1>
+          <p className="lead text-muted pb-3">
             Use forms and inputs to set variables and 
             parameters all via web browser.
           </p>
-        </div>
-      </div>
-      <div className="row p-3 justify-content-center">
-        <div className="col-6 col-md-4 align-self-center text-center">
+        </Col>
+      </Row>
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
           <h2>Number selected: {count}</h2>
-        </div>
-      </div>
-      <div className="row justify-content-center">
-        <div className="col-4 col-md-2 align-self-center text-center">
+        </Col>
+      </Row>
+      <Row className="justify-content-center">
+        <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
             <select value={count} className="form-control" onChange={handleChange}>
               <option value="0">Choose a number...</option>
@@ -152,9 +153,9 @@ function Variables(props) {
               <option value="2">2</option>
             </select>
           </form>
-        </div>
-      </div>
-    </div>
+        </Col>
+      </Row>
+    </Container>
   )
 }
 
@@ -180,29 +181,27 @@ function Publish(props) {
   };
 
   return (
-    <div className="App">
-      <div className="row justify-content-center">
-        <div className="col-4 col-md-2 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <label for="payload">Enter message:</label>
-            <input
-              type="text"
-              value={message.payload}
-              onChange={e => setMessage({payload: e.target.value})}
-              name="payload"
-            />
-            <label for="topic">Enter topic:</label>
-            <input
-              type="text"
-              value={message.topic}
-              onChange={e => setMessage({topic: e.target.value})}
-              name="topic"
-            />
-            <input type="submit" value="Publish" />
-          </form>
-        </div>
-      </div>
-    </div>
+    <Row className="p-3 justify-content-center">
+      <Col className="col-4 align-self-center text-center">
+        <form onSubmit={handleSubmit}>
+          <label for="payload">Enter message:</label>
+          <input
+            type="text"
+            value={message.payload}
+            onChange={e => setMessage({payload: e.target.value})}
+            name="payload"
+          />
+          <label for="topic">Enter topic:</label>
+          <input
+            type="text"
+            value={message.topic}
+            onChange={e => setMessage({topic: e.target.value})}
+            name="topic"
+          />
+          <input type="submit" value="Publish" />
+        </form>
+      </Col>
+    </Row>
   )
 }
 
@@ -224,37 +223,35 @@ function Connect(props) {
   };
 
   return (
-    <div className="App">
-      <div className="row justify-content-center">
-        <div className="col-4 col-md-2 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <label for="hostname">Enter hostname:</label>
-            <input
-              type="text"
-              value={hostname}
-              onChange={e => setHost(e.target.value)}
-              name="hostname"
-            />
-            <input type="submit" value="Connect" />
-          </form>
-        </div>
-      </div>
-    </div>
+    <Row className="p-3 justify-content-center">
+      <Col className="col-4 align-self-center text-center">
+        <form onSubmit={handleSubmit}>
+          <label for="hostname">Enter hostname:</label>
+          <input
+            type="text"
+            value={hostname}
+            onChange={e => setHost(e.target.value)}
+            name="hostname"
+          />
+          <input type="submit" value="Connect" />
+        </form>
+      </Col>
+    </Row>
   )
 }
 
 function MQTT(props) {
   return (
-    <div class="container-fluid">
-      <div class="row p-5 justify-content-center">
-        <div class="description col col-md-6 bg-light rounded-3 align-self-center text-center shadow">
-          <h1 class="p-4 headline"><strong>MQTT</strong></h1>
-          <p class="lead text-muted pb-3">Publish messages and subscribe to topics!</p>
-        </div>
-      </div>
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+          <h1 className="p-4 headline"><strong>MQTT</strong></h1>
+          <p className="lead text-muted pb-3">Publish messages and subscribe to topics!</p>
+        </Col>
+      </Row>
       <Publish />
       <Connect />
-    </div>
+    </Container>
   )
 }
 

@@ -1,6 +1,13 @@
 // App.js
 const { BrowserRouter, Switch, Route, Link } = ReactRouterDOM;
 const { Container, Row, Col, Navbar } = ReactBootstrap;
+const { useState } = React;
+
+const error_codes = {
+  0: 'Success',
+  1: 'Failure',
+  2: 'No response',
+};
 
 function NavBar(props) {
   // Classes for each module
@@ -50,26 +57,63 @@ function About(props) {
 
 function IO(props) {
 
-  const [state, setState] = React.useState(0);
-  const stateArray = {"0": "LOW", "1": "HIGH"}
+  const [output, setOutput] = useState({
+    pin: 0,
+    state: 'LOW',
+  });
 
-  function handleChange(e){
-    setState(e.target.value);
+  const [input, setInput] = useState({
+    pin: 0,
+    state: 'LOW',
+  });
+
+  function readInput(event) {
+    event.preventDefault();
     axios.post('/io', {
-      output: state,
+      action: 'read',
+      pin: event.target.value,
     })
     .then(function (response) {
-      console.log(response);
+      setInput({
+        pin: response.data.pin,
+        state: response.data.state,
+      })
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+  }
+
+  function writeOutput(event){
+    event.preventDefault();
+    axios.post('/io', {
+      action: 'write',
+      pin: output.pin, 
+      state: event.target.value,
+    })
+    .then(function (response) {
+      setOutput(prevState => {
+        return {
+          ...prevState,
+          state: response.data.state,
+        };
+      });
     })
     .catch(function (error) {
       console.log(error);
     });
   };
 
-  function handleSubmit(e){
-    e.preventDefault();
-    console.log(framework);
-  };
+  function chooseOutput(event) {
+    event.preventDefault();
+    setOutput(prevState => {
+      // Object.assign would also work
+      return {
+        ...prevState,
+        pin: event.target.value
+      };
+    });
+  }
 
   return (
     <Container fluid="sm">
@@ -84,16 +128,44 @@ function IO(props) {
       </Row>
       <Row className="p-3 justify-content-center">
         <Col className="align-self-center text-center">
-          <h2>Output state: {stateArray[state]}</h2>
+          <h2>Input {input.pin} state: {input.state}</h2>
+        </Col>
+        <Col className="align-self-center text-center">
+          <h2>Output {output.pin} state: {output.state}</h2>
         </Col>
       </Row>
       <Row className="justify-content-center">
+      <Col className="col-4 align-self-center text-center">
+          <form>
+            <select
+              value={input.pin}
+              className="form-control"
+              onChange={readInput}
+            >
+              <option>Choose an input...</option>
+              <option value={0}>0</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+            </select>
+          </form>
+        </Col>
         <Col className="col-4 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <select value={state} className="form-control" onChange={handleChange}>
+          <form>
+            <select 
+            value={output.pin}
+            className="form-control"
+            onChange={chooseOutput}>
+              <option>Choose an output...</option>
+              <option value={0}>0</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+            </select>
+            <select value={output.state} className="form-control" onChange={writeOutput}>
               <option>Choose a state...</option>
-              <option value="0">Low</option>
-              <option value="1">High</option>
+              <option value={0}>Low</option>
+              <option value={1}>High</option>
             </select>
           </form>
         </Col>
@@ -104,11 +176,13 @@ function IO(props) {
 
 function Variables(props) {
 
-  const [count, setCount] = React.useState(0);
+  const [count, setCount] = useState(0);
 
-  function sendCount(value) {
+  function sendCount(event) {
+    event.preventDefault();
+    setCount(event.target.value);
     axios.post('/variables', {
-      postInt: value,
+      postInt: event.target.value,
     })
     .then(function (response) {
       console.log(response);
@@ -117,16 +191,6 @@ function Variables(props) {
       console.log(error);
     });
   }
-
-  function handleChange(e){
-    setCount(e.target.value);
-    sendCount(e.target.value);
- };
-
-  function handleSubmit(e){
-    e.preventDefault();
-    console.log(framework);
-  };
 
   return (
     <Container fluid="sm">
@@ -146,8 +210,8 @@ function Variables(props) {
       </Row>
       <Row className="justify-content-center">
         <Col className="col-4 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <select value={count} className="form-control" onChange={handleChange}>
+          <form>
+            <select value={count} className="form-control" onChange={sendCount}>
               <option value="0">Choose a number...</option>
               <option value="1">1</option>
               <option value="2">2</option>
@@ -159,88 +223,100 @@ function Variables(props) {
   )
 }
 
-function Publish(props) {
-
-  const [message, setMessage] = React.useState({
-    payload: 'Hello world!',
-    topic: '/topic',
-  });
-
-  function handleSubmit(event){
-    event.preventDefault();
-    axios.post('/mqtt/pub', {
-      payload: message.payload,
-      topic: message.topic,
-    })
-    .then(function (response) {
-      console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-  };
-
-  return (
-    <Row className="p-3 justify-content-center">
-      <Col className="col-4 align-self-center text-center">
-        <form onSubmit={handleSubmit}>
-          <label for="payload">Enter message:</label>
-          <input
-            type="text"
-            value={message.payload}
-            onChange={e => setMessage({payload: e.target.value})}
-            name="payload"
-          />
-          <label for="topic">Enter topic:</label>
-          <input
-            type="text"
-            value={message.topic}
-            onChange={e => setMessage({topic: e.target.value})}
-            name="topic"
-          />
-          <input type="submit" value="Publish" />
-        </form>
-      </Col>
-    </Row>
-  )
-}
-
-function Connect(props) {
-
-  const [hostname, setHost] = React.useState("10.0.0.28");
-
-  function handleSubmit(event){
-    event.preventDefault();
-    axios.post('/mqtt/connect', {
-      host: hostname,
-    })
-    .then(function (response) {
-      console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-  };
-
-  return (
-    <Row className="p-3 justify-content-center">
-      <Col className="col-4 align-self-center text-center">
-        <form onSubmit={handleSubmit}>
-          <label for="hostname">Enter hostname:</label>
-          <input
-            type="text"
-            value={hostname}
-            onChange={e => setHost(e.target.value)}
-            name="hostname"
-          />
-          <input type="submit" value="Connect" />
-        </form>
-      </Col>
-    </Row>
-  )
-}
-
 function MQTT(props) {
+
+  const [connected, setConnected] = useState(false)
+  const [hostname, setHost] = useState("10.0.0.28");
+
+  function Connect(props) {
+
+    function handleSubmit(event){
+      event.preventDefault();
+      axios.post('/mqtt/connect', {
+        host: hostname,
+      })
+      .then(function (response) {
+        if (response.data.code==0) { setConnected(true); }
+        else { setConnected(false); }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    };
+
+    function ConnectionStatus(props) {
+      if (connected) { return <p>Connected!</p> }
+      else { return <p>Not connected</p>}
+    }
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="hostname">Enter hostname:</label>
+            <input
+              type="text"
+              value={hostname}
+              onChange={e => setHost(e.target.value)}
+              name="hostname"
+            />
+            <input type="submit" value="Connect" />
+          </form>
+          <ConnectionStatus />
+        </Col>
+      </Row>
+    )
+  }
+
+  function Publish(props) {
+
+    const [message, setMessage] = useState({
+      payload: 'Hello world!',
+      topic: '/topic',
+    });
+    const [status, setStatus] = useState("")
+
+    function handleSubmit(event){
+      event.preventDefault();
+      axios.post('/mqtt/pub', {
+        payload: message.payload,
+        topic: message.topic,
+      })
+      .then(function (response) {
+        if(response.data.code>0) { setStatus("Failed to publish!") }
+        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic+" at "+hostname)}
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    };
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="payload">Enter message:</label>
+            <input
+              type="text"
+              value={message.payload}
+              onChange={e => setMessage({payload: e.target.value})}
+              name="payload"
+            />
+            <label for="topic">Enter topic:</label>
+            <input
+              type="text"
+              value={message.topic}
+              onChange={e => setMessage({topic: e.target.value})}
+              name="topic"
+            />
+            <input type="submit" value="Publish" />
+            <p>{status}</p>
+          </form>
+        </Col>
+      </Row>
+    )
+  }
+
   return (
     <Container fluid="sm">
       <Row className="p-5 justify-content-center">

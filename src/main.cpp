@@ -19,7 +19,7 @@ String subTopic = "None";
 // Library classes
 AsyncWebServer server(80);
 WiFiClient espClient;
-PubSubClient client(espClient);
+PubSubClient pubsubClient(espClient);
 DynamicJsonDocument doc(1024);
 
 // Dual-core tasks
@@ -50,21 +50,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!pubsubClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP32-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str())) {
+    if (pubsubClient.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("/home/status/esp32", "Hello world!");
+      pubsubClient.publish("/home/status/esp32", "Hello world!");
       // ... and resubscribe
-      client.subscribe("/home/status/time");
+      pubsubClient.subscribe("/home/status/time");
     } else {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(pubsubClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -75,8 +75,8 @@ void reconnect() {
 // Initialize and setup MQTT client then connect
 // https://pubsubclient.knolleary.net/
 void SetupMQTT(const char* hostname ) {
-  client.setServer(hostname, 1883);
-  client.setCallback(callback);
+  pubsubClient.setServer(hostname, 1883);
+  pubsubClient.setCallback(callback);
   reconnect();
 }
 
@@ -152,7 +152,7 @@ void SetupServer() {
   });
 
   // Variable JSON message parser 
-  server.on("/mqtt/connect", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/mqtt", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -167,53 +167,28 @@ void SetupServer() {
       Serial.println(error.f_str());
       return;
     }
-    const char* hostname = doc["host"];
-    SetupMQTT(hostname);
-    String response;
-    response.reserve(1024);
-    doc["code"] = 0;
-    
-    serializeJson(doc, response);
-    request->send(200, "application/json", response);
-  });
 
-  // Variable JSON message parser 
-  server.on("/mqtt/pub", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    delay(1);
-  },
-  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
-  {
-    delay(1);
-  },
-  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-  {
-    DeserializationError error = deserializeJson(doc, data);
-    if (error) {
-      Serial.println(error.f_str());
-      return;
+    if (doc["action"]=="connect") {
+      const char* hostname = doc["host"];
+      SetupMQTT(hostname);
+      doc["code"] = 0;
+    } else if (doc["action"]=="publish") {
+      const char* payload = doc["payload"];
+      const char* topic = doc["topic"];
+      bool published = pubsubClient.publish(topic, payload);
+      if(!published) { doc["code"] = 1; }
+      else { doc["code"] = 0; }
+    } else if (doc["action"]=="subscribe") {
+      const char* topic = doc["topic"];
+      bool subscribed = pubsubClient.subscribe(topic);
+      if(!subscribed) { doc["code"] = 1; }
+      else { doc["code"] = 0; }
     }
-    const char* payload = doc["payload"];
-    const char* topic = doc["topic"];
-    bool published = client.publish(topic, payload);
+    
     String response;
     response.reserve(1024);
-    if(!published) { 
-      Serial.println("Failed to publish!");
-      doc["code"] = 1;
-    } else { doc["code"] = 0; }
-    
     serializeJson(doc, response);
     request->send(200, "application/json", response);
-  });
-
-  server.on("/mqtt/sub", HTTP_POST, [](AsyncWebServerRequest *request){
-    if (request->hasParam("subtopic", true)) {
-      subTopic = request->getParam("subtopic", true)->value();
-      bool subscribed = client.subscribe(subTopic.c_str());
-      if(!subscribed) { Serial.println("Failed to subscribe!"); }
-    } else { return; }
-    request->send(SPIFFS, "/mqtt.html", String(), false);
   });
 
   server.onNotFound(notFound);
@@ -278,7 +253,7 @@ void Task1code( void * pvParameters ) {
 
   for(;;) {
     ArduinoOTA.handle();
-    if (client.connected()) { client.loop(); }
+    if (pubsubClient.connected()) { pubsubClient.loop(); }
     // DELETING THIS DELAY WILL CRASH THE MCU
     delay(25);
   }

@@ -1,4 +1,4 @@
-# Features
+# Features & Examples
 
 * Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a> (Estonia)
 * Soft AP - <a href="https://github.com/tzapu/WiFiManager">WiFiManager</a> (Asia)
@@ -14,6 +14,7 @@
     * <a href="https://github.com/me-no-dev/ESPAsyncWebServer/blob/master/examples/simple_server/simple_server.ino">Webserver example</a>
 * Dual core multi-tasking - <a href="https://freertos.org">FreeRTOS</a> (USA)
     * <a href="https://microcontrollerslab.com/esp32-dual-core-freertos-arduino-ide/">Task handler example</a>
-* Responsive web interface. Single page app powered by <a href="https://reactjs.org">React</a> and <a href="https://getbootstrap.com">Boostrap</a> via CDN
+* Single page app powered by <a href="https://reactjs.org">React UI</a>, <a href="https://axios-http.com">Axios API</a>, and <a href="https://getbootstrap.com">Boostrap</a> layout via CDN
     * <a href="https://reactjs.org/tutorial/tutorial.html">React tutorial</a>
     * <a href="https://getbootstrap.com/docs/5.0/getting-started/introduction/">Bootstrap docs</a>
+    * <a href="https://axios-http.com/docs/api_intro">Axios docs</a>

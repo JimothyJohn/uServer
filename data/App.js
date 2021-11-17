@@ -1,6 +1,6 @@
 // App.js
 const { BrowserRouter, Switch, Route, Link } = ReactRouterDOM;
-const { Container, Row, Col, Navbar } = ReactBootstrap;
+const { Container, Row, Col, Navbar, Nav } = ReactBootstrap;
 const { useState } = React;
 
 const error_codes = {
@@ -10,17 +10,22 @@ const error_codes = {
 };
 
 function NavBar(props) {
-  // Classes for each module
-  const navClass = "navbar-dark shadow px-5";
-  const linkClass = "navbar-brand px-3";
 
   return (
     <header>
-      <Navbar bg="dark" className={navClass}>
-        <Link to="/" className={linkClass}>About</Link>
-        <Link to="/io" className={linkClass}>Digital I/O</Link>
-        <Link to="/variables" className={linkClass}>Variables</Link>
-        <Link to="/mqtt" className={linkClass}>MQTT</Link>
+      <Navbar collapseOnSelect bg="dark" variant="dark" expand="lg" className="shadow">
+        <Container>
+          <Navbar.Brand as={Link} to="/">µServer</Navbar.Brand>
+          <Navbar.Toggle aria-controls="muh-toggle" />
+          <Navbar.Collapse id="muh-toggle">
+            <Nav className="me-auto">
+              <Nav.Link as={Link} to="/io">Digital I/O</Nav.Link>
+              <Nav.Link as={Link} to="/variables">Variables</Nav.Link>
+              <Nav.Link as={Link} to="/mqtt">MQTT</Nav.Link>
+              <Nav.Link as={Link} to="/modbus">Modbus</Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
       </Navbar>
     </header>
   );
@@ -164,8 +169,8 @@ function IO(props) {
             </select>
             <select value={output.state} className="form-control" onChange={writeOutput}>
               <option>Choose a state...</option>
-              <option value={0}>Low</option>
-              <option value={1}>High</option>
+              <option value={0}>LO</option>
+              <option value={1}>HI</option>
             </select>
           </form>
         </Col>
@@ -232,7 +237,8 @@ function MQTT(props) {
 
     function handleSubmit(event){
       event.preventDefault();
-      axios.post('/mqtt/connect', {
+      axios.post('/mqtt', {
+        action: 'connect',
         host: hostname,
       })
       .then(function (response) {
@@ -278,7 +284,8 @@ function MQTT(props) {
 
     function handleSubmit(event){
       event.preventDefault();
-      axios.post('/mqtt/pub', {
+      axios.post('/mqtt', {
+        action: 'publish',
         payload: message.payload,
         topic: message.topic,
       })
@@ -325,8 +332,117 @@ function MQTT(props) {
           <p className="lead text-muted pb-3">Publish messages and subscribe to topics!</p>
         </Col>
       </Row>
-      <Publish />
       <Connect />
+      <Publish />
+    </Container>
+  )
+}
+
+function Modbus(props) {
+
+  const [connected, setConnected] = useState(false)
+  const [hostname, setHost] = useState("10.0.0.28");
+
+  function Connect(props) {
+
+    function handleSubmit(event){
+      event.preventDefault();
+      axios.post('/modbus', {
+        host: hostname,
+      })
+      .then(function (response) {
+        if (response.data.code==0) { setConnected(true); }
+        else { setConnected(false); }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    };
+
+    function ConnectionStatus(props) {
+      if (connected) { return <p>Connected!</p> }
+      else { return <p>Not connected</p>}
+    }
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="hostname">Enter hostname:</label>
+            <input
+              type="text"
+              value={hostname}
+              onChange={e => setHost(e.target.value)}
+              name="hostname"
+            />
+            <input type="submit" value="Connect" />
+          </form>
+          <ConnectionStatus />
+        </Col>
+      </Row>
+    )
+  }
+
+  function Publish(props) {
+
+    const [message, setMessage] = useState({
+      payload: 'Hello world!',
+      topic: '/topic',
+    });
+    const [status, setStatus] = useState("")
+
+    function handleSubmit(event){
+      event.preventDefault();
+      axios.post('/modbus', {
+        payload: message.payload,
+        topic: message.topic,
+      })
+      .then(function (response) {
+        if(response.data.code>0) { setStatus("Failed to publish!") }
+        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic+" at "+hostname)}
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    };
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="payload">Enter message:</label>
+            <input
+              type="text"
+              value={message.payload}
+              onChange={e => setMessage({payload: e.target.value})}
+              name="payload"
+            />
+            <label for="topic">Enter topic:</label>
+            <input
+              type="text"
+              value={message.topic}
+              onChange={e => setMessage({topic: e.target.value})}
+              name="topic"
+            />
+            <input type="submit" value="Publish" />
+            <p>{status}</p>
+          </form>
+        </Col>
+      </Row>
+    )
+  }
+
+  return (
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+          <h1 className="p-4 headline"><strong>Modbus</strong></h1>
+          <p className="lead text-muted pb-3"><b>IN PROGRESS</b><br />
+          Communicate with industrial devices</p>
+        </Col>
+      </Row>
+      <Connect />
+      <Publish />
     </Container>
   )
 }
@@ -340,6 +456,7 @@ function App(props) {
         <Route path="/io"><IO /></Route>
         <Route path="/variables"><Variables /></Route>
         <Route path="/mqtt"><MQTT /></Route>
+        <Route path="/modbus"><Modbus /></Route>
       </Switch>
       <Footer />
     </div>

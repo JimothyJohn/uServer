@@ -10,22 +10,20 @@
 #include <PubSubClient.h> // Enable MQTT
 #include <ArduinoJson.h> // Handle JSON messages
 
-// Variables for "Digital I/O" page, change to match your configuration
-const uint8_t buttonPin = 2; // the number of the pushbutton pin
-const uint8_t ledPin =  13; // the number of the LED pin
+// Variable for Variables page, change to match your configuration
+uint8_t userVariable = 0;
 
-// Variables for "MQTT" example, change to match your configuration
+// Delete when possible
 String subTopic = "None";
 
 // Library classes
 AsyncWebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
-StaticJsonDocument<200> doc;
+DynamicJsonDocument doc(1024);
 
 // Dual-core tasks
 TaskHandle_t Task1;
-TaskHandle_t Task2;
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
@@ -100,7 +98,7 @@ void SetupServer() {
   });
 
   // IO JSON message parser 
-  server.on("/io$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/io", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -115,13 +113,22 @@ void SetupServer() {
       Serial.println(error.f_str());
       return;
     }
-    uint8_t outputState = doc["state"].as<uint8_t>();;
-    uint8_t outputPin = doc["point"].as<uint8_t>();;
-    digitalWrite(outputPin, outputState);
+
+    if (doc["action"]=="read") {
+      if(digitalRead(doc["pin"])) { doc["state"] = "HIGH"; }
+      else { doc["state"] = "LOW"; }
+    } else if (doc["action"]=="write") {
+      digitalWrite(doc["pin"], doc["state"]);
+    }
+
+    String response;
+    response.reserve(1024);
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
   });
 
   // Variable JSON message parser 
-  server.on("/variables$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/variables", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -136,13 +143,16 @@ void SetupServer() {
       Serial.println(error.f_str());
       return;
     }
-    uint8_t adding = doc["postInt"].as<uint8_t>();;
-    Serial.print("postInt: ");
-    Serial.println(adding);
+    userVariable = doc["postInt"].as<uint8_t>();;
+    String response;
+    response.reserve(1024);
+    doc["code"] = 0;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
   });
 
   // Variable JSON message parser 
-  server.on("/mqtt/connect$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/mqtt/connect", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -159,11 +169,16 @@ void SetupServer() {
     }
     const char* hostname = doc["host"];
     SetupMQTT(hostname);
+    String response;
+    response.reserve(1024);
+    doc["code"] = 0;
+    
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
   });
 
-
   // Variable JSON message parser 
-  server.on("/mqtt/pub$", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/mqtt/pub", HTTP_POST, [](AsyncWebServerRequest *request)
   {
     delay(1);
   },
@@ -181,10 +196,18 @@ void SetupServer() {
     const char* payload = doc["payload"];
     const char* topic = doc["topic"];
     bool published = client.publish(topic, payload);
-    if(!published) { Serial.println("Failed to publish!"); }
+    String response;
+    response.reserve(1024);
+    if(!published) { 
+      Serial.println("Failed to publish!");
+      doc["code"] = 1;
+    } else { doc["code"] = 0; }
+    
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
   });
 
-  server.on("/mqtt/sub$", HTTP_POST, [](AsyncWebServerRequest *request){
+  server.on("/mqtt/sub", HTTP_POST, [](AsyncWebServerRequest *request){
     if (request->hasParam("subtopic", true)) {
       subTopic = request->getParam("subtopic", true)->value();
       bool subscribed = client.subscribe(subTopic.c_str());
@@ -195,11 +218,13 @@ void SetupServer() {
 
   server.onNotFound(notFound);
   server.begin();
+  Serial.print("WebServer running on core ");
+  Serial.println(xPortGetCoreID());
 }
 
 // Enable OTA updates
 void SetupOTA() {
-  Serial.print("Configuring OTA...");
+  Serial.println("Configuring OTA...");
   ArduinoOTA
     .onStart([]() {
       String type;
@@ -233,7 +258,6 @@ void SetupOTA() {
 // Initialize Wi-Fi manager and connect to Wi-Fi
 // https://github.com/khoih-prog/ESP_WiFiManager
 void SetupWiFi() {
-  Serial.print("Configuring WiFi...");
   Serial.print(F("\nStarting AutoConnect_ESP32_minimal on ")); Serial.println(ARDUINO_BOARD); 
   Serial.println(ESP_WIFIMANAGER_VERSION);
   ESP_WiFiManager wm("uServer");
@@ -249,25 +273,14 @@ void SetupWiFi() {
 
 // WebServer Task 
 void Task1code( void * pvParameters ) {
-  Serial.print("Task1 running on core ");
+  Serial.print("Auxiliary task running on core ");
   Serial.println(xPortGetCoreID());
 
   for(;;) {
     ArduinoOTA.handle();
     if (client.connected()) { client.loop(); }
     // DELETING THIS DELAY WILL CRASH THE MCU
-    delay(10);
-  }
-}
-
-// Comms Task 
-void Task2code( void * pvParameters ) {
-  Serial.print("Task2 running on core ");
-  Serial.println(xPortGetCoreID());
-
-  for(;;) {
-    Serial.println("Task2 heartbeat");
-    delay(10000);
+    delay(25);
   }
 }
 
@@ -278,7 +291,6 @@ void setup() {
   // Start serial server and connect to WiFi
   Serial.begin(115200);
   while (!Serial);
-  Serial.print("Serial alive!");
 
   // Uses soft AP to connect to Wi-Fi (if saved credentials aren't valid)
   SetupWiFi();
@@ -300,25 +312,12 @@ void setup() {
   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
                     Task1code,   /* Task function. */
-                    "WebServer",     /* name of task. */
+                    "Auxiliary",     /* name of task. */
                     10000,       /* Stack size of task */
                     NULL,        /* parameter of the task */
                     1,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
                     0);          /* pin task to core 0 */                  
-
-  //create a task that will be executed in the Task2code() function, with priority 1 and executed on core 1
-  xTaskCreatePinnedToCore(
-                    Task2code,   /* Task function. */
-                    "Comms",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &Task2,      /* Task handle to keep track of created task */
-                    1);          /* pin task to core 1 */
-
-  pinMode(ledPin, OUTPUT); // initialize the LED pin as an output:
-  pinMode(buttonPin, INPUT); // initialize the pushbutton pin as an input:
 }
 
 // Main loop

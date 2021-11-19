@@ -144,6 +144,8 @@ void SetupServer() {
       return;
     }
     userVariable = doc["postInt"].as<uint8_t>();;
+    Serial.print("Received a ");
+    Serial.println(userVariable);
     String response;
     response.reserve(1024);
     doc["code"] = 0;

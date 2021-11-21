@@ -18,6 +18,7 @@ String subTopic = "None";
 
 // Library classes
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
 WiFiClient espClient;
 PubSubClient pubsubClient(espClient);
 DynamicJsonDocument doc(1024);
@@ -32,20 +33,28 @@ void notFound(AsyncWebServerRequest *request) {
 // MQTT Handling functions
 // https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_basic/mqtt_basic.ino
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
+  // Create spot in memory for message
   char message[length + 1];
+  // Write payload to String
   strncpy(message, (char*)payload, length);
+  // Nullify last character to eliminate garbage at end
   message[length] = '\0';
-  DeserializationError error = deserializeJson(doc, message);
-  if (error) {
-    Serial.println(error.f_str());
-    return;
-  }
-  //const char* current_time = doc["time"];
-  Serial.print("Message: ");
-  Serial.println(message);
+  
+  // Create correct object
+  Serial.print("Received \"");
+  Serial.print(message);
+  Serial.print("\" from ");
+  Serial.println(topic);
+  
+  DynamicJsonDocument docu(256);
+  docu["message"] = message;
+  docu["topic"] = topic;
+    
+  String response;
+  response.reserve(1024);
+  serializeJson(docu, response);
+  const char* responseChar = response.c_str();
+  events.send(responseChar, "subscription", millis());
 }
 
 void reconnect() {
@@ -121,6 +130,10 @@ void SetupServer() {
       digitalWrite(doc["pin"], doc["state"]);
     }
 
+    Serial.print(doc["pin"].as<const char*>());
+    Serial.print(" is ");
+    Serial.println(doc["state"].as<const char*>());
+
     String response;
     response.reserve(1024);
     serializeJson(doc, response);
@@ -143,7 +156,7 @@ void SetupServer() {
       Serial.println(error.f_str());
       return;
     }
-    userVariable = doc["postInt"].as<uint8_t>();;
+    userVariable = doc["postInt"].as<uint8_t>();
     Serial.print("Received a ");
     Serial.println(userVariable);
     String response;
@@ -174,9 +187,18 @@ void SetupServer() {
       const char* hostname = doc["host"];
       SetupMQTT(hostname);
       doc["code"] = 0;
+    } else if (doc["action"]=="disconnect") {
+      Serial.println("Disconnecting from MQTT broker");
+      pubsubClient.disconnect();
+      if(!pubsubClient.connected()) { doc["code"] = 0; }
+      else { doc["code"] = 1; }
     } else if (doc["action"]=="publish") {
       const char* payload = doc["payload"];
       const char* topic = doc["topic"];
+      Serial.print("Publishing ");
+      Serial.print(payload);
+      Serial.print(" to ");
+      Serial.println(topic);
       bool published = pubsubClient.publish(topic, payload);
       if(!published) { doc["code"] = 1; }
       else { doc["code"] = 0; }
@@ -193,6 +215,19 @@ void SetupServer() {
     request->send(200, "application/json", response);
   });
 
+  // setup ......
+  events.onConnect([](AsyncEventSourceClient *client){
+    if(client->lastId()){
+      Serial.printf("Client reconnected! Last message ID that it gat is: %u\n", client->lastId());
+    }
+    //send event with message "hello!", id current millis
+    // and set reconnect delay to 1 second
+    client->send("hello!",NULL,millis(),1000);
+  });
+  //HTTP Basic authentication
+  // events.setAuthentication("user", "pass");
+  server.addHandler(&events);
+
   server.onNotFound(notFound);
   server.begin();
   Serial.print("WebServer running on core ");
@@ -202,8 +237,7 @@ void SetupServer() {
 // Enable OTA updates
 void SetupOTA() {
   Serial.println("Configuring OTA...");
-  ArduinoOTA
-    .onStart([]() {
+  ArduinoOTA.onStart([]() {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";

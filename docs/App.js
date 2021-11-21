@@ -23,7 +23,6 @@ function NavBar(props) {
               <Nav.Link as={Link} to="/variables">Variables</Nav.Link>
               <Nav.Link as={Link} to="/mqtt">MQTT</Nav.Link>
               <Nav.Link as={Link} to="/modbus">Modbus</Nav.Link>
-              <Nav.Link as={Link} to="/chatbot">Chatbot</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -33,6 +32,7 @@ function NavBar(props) {
 }
 
 function Footer(props) {
+
     return(
       <footer>
         <Container fluid="sm" className="fixed-bottom">
@@ -48,6 +48,7 @@ function Footer(props) {
 }
 
 function About(props) {
+
   return (
     <Container fluid="sm">
       <Row className="p-5 justify-content-center">
@@ -232,29 +233,27 @@ function Variables(props) {
 function MQTT(props) {
 
   const [connected, setConnected] = useState(false)
-  const [hostname, setHost] = useState("10.0.0.28");
-
-  function Connect(props) {
+  
+  function Connect() {
+    
+    const [hostname, setHost] = useState("10.0.0.28");
 
     function handleSubmit(event){
       event.preventDefault();
+      const action = 'connect'
+      if(connected) { const action = 'disconnect' }
       axios.post('/mqtt', {
-        action: 'connect',
+        action: action,
         host: hostname,
       })
       .then(function (response) {
-        if (response.data.code==0) { setConnected(true); }
+        if (response.data.code==0) { setConnected(!connected); }
         else { setConnected(false); }
       })
       .catch(function (error) {
         console.log(error);
       });
     };
-
-    function ConnectionStatus(props) {
-      if (connected) { return <p>Connected!</p> }
-      else { return <p>Not connected</p>}
-    }
 
     return (
       <Row className="p-3 justify-content-center">
@@ -264,18 +263,18 @@ function MQTT(props) {
             <input
               type="text"
               value={hostname}
-              onChange={e => setHost(e.target.value)}
+              onChange={event => setHost(event.target.value)}
               name="hostname"
             />
-            <input type="submit" value="Connect" />
+            <input type="submit" value={connected ? 'Disconnect' : 'Connect'} />
           </form>
-          <ConnectionStatus />
+          <p>{connected ? 'Connected to'+hostname : 'Not connected'}</p>
         </Col>
       </Row>
     )
   }
 
-  function Publish(props) {
+  function Publish() {
 
     const [message, setMessage] = useState({
       payload: 'Hello world!',
@@ -283,8 +282,16 @@ function MQTT(props) {
     });
     const [status, setStatus] = useState("")
 
-    function handleSubmit(event){
+    const handleChange = (event) => {
+      setMessage({...message, [event.target.name]: event.target.value});
+    }
+
+    function handleSubmit(event) {
       event.preventDefault();
+      if(!connected) {
+        setStatus("Not connected to broker!")
+        return
+      }
       axios.post('/mqtt', {
         action: 'publish',
         payload: message.payload,
@@ -292,7 +299,7 @@ function MQTT(props) {
       })
       .then(function (response) {
         if(response.data.code>0) { setStatus("Failed to publish!") }
-        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic+" at "+hostname)}
+        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic)}
       })
       .catch(function (error) {
         console.log(error);
@@ -307,14 +314,14 @@ function MQTT(props) {
             <input
               type="text"
               value={message.payload}
-              onChange={e => setMessage({payload: e.target.value})}
+              onChange={handleChange}
               name="payload"
             />
             <label for="topic">Enter topic:</label>
             <input
               type="text"
               value={message.topic}
-              onChange={e => setMessage({topic: e.target.value})}
+              onChange={handleChange}
               name="topic"
             />
             <input type="submit" value="Publish" />
@@ -324,6 +331,76 @@ function MQTT(props) {
       </Row>
     )
   }
+
+  function Subscribe() {
+
+    const source = new EventSource('/events');
+
+    source.addEventListener('subscription', function(event) {
+      setStatus(event.data);
+    }, false);
+
+    const [topic, setTopic] = useState('/topic');
+    const [subs, setSubs] = useState([])
+    const [status, setStatus] = useState("")
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      if(!connected) {
+        setStatus("Not connected to broker!")
+        return
+      }
+      axios.post('/mqtt', {
+        action: 'subscribe',
+        topic: topic,
+      })
+      .then(function (response) {
+        if(response.data.code>0) { setStatus("Failed to subscribe!") }
+        else { 
+          setSubs(subs.concat(topic));
+          setStatus("Subscribed to \""+topic);
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    };
+    
+    function renderSub(sub) {
+      return(
+        <li >{sub}</li>
+      );
+    }
+
+    // Automate navbar link creation
+    function listSubs() {
+      const subList = [];
+      for (var i=0; i<subs.length; i++) {
+        subList.push(renderSub(subs[i]));
+      };
+      return ( <ul>{subList}</ul> );
+    }
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="payload">subscribe to topic:</label>
+            <input
+              type="text"
+              value={topic}
+              onChange={event => setTopic(event.target.value)}
+              name="payload"
+            />
+            <input type="submit" value="Subscribe" />
+          </form>
+          <p>{status}</p>
+          <listSubs />
+        </Col>
+      </Row>
+    )
+  }
+
 
   return (
     <Container fluid="sm">
@@ -335,6 +412,7 @@ function MQTT(props) {
       </Row>
       <Connect />
       <Publish />
+      <Subscribe />
     </Container>
   )
 }
@@ -448,121 +526,6 @@ function Modbus(props) {
   )
 }
 
-
-function Chatbot(props) {
-
-
-
-  const API_URL = "https://api-inference.huggingface.co/models/google/tapas-base-finetuned-wtq"
-  const headers = {"Authorization": "Bearer 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"}
-  
-  const options = {
-    method: 'POST',
-    headers: headers,
-    data: data,
-    url: `${SERVER}${url}`,
-  };
-
-  axios.post(options)
-  
-  output = query({
-      "inputs": {
-      "query": "How many stars does the transformers repository have?",
-      "table": {
-        "Repository": ["Transformers", "Datasets", "Tokenizers"],
-        "Stars": ["36542", "4512", "3934"],
-        "Contributors": ["651", "77", "34"],
-        "Programming language": [
-          "Python",
-          "Python",
-          "Rust, Python and NodeJS",
-        ],
-      }
-    },
-  })
-    return (
-      <Row className="p-3 justify-content-center">
-        <Col className="col-4 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <label for="hostname">Enter hostname:</label>
-            <input
-              type="text"
-              value={hostname}
-              onChange={e => setHost(e.target.value)}
-              name="hostname"
-            />
-            <input type="submit" value="Connect" />
-          </form>
-          <ConnectionStatus />
-        </Col>
-      </Row>
-    )
-  }
-
-  function Chatbot(props) {
-
-    const [message, setMessage] = useState({
-      payload: 'Hello world!',
-      topic: '/topic',
-    });
-    const [status, setStatus] = useState("")
-
-    function handleSubmit(event){
-      event.preventDefault();
-      axios.post('/modbus', {
-        payload: message.payload,
-        topic: message.topic,
-      })
-      .then(function (response) {
-        if(response.data.code>0) { setStatus("Failed to publish!") }
-        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic+" at "+hostname)}
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-    };
-
-    return (
-      <Row className="p-3 justify-content-center">
-        <Col className="col-4 align-self-center text-center">
-          <form onSubmit={handleSubmit}>
-            <label for="payload">Enter message:</label>
-            <input
-              type="text"
-              value={message.payload}
-              onChange={e => setMessage({payload: e.target.value})}
-              name="payload"
-            />
-            <label for="topic">Enter topic:</label>
-            <input
-              type="text"
-              value={message.topic}
-              onChange={e => setMessage({topic: e.target.value})}
-              name="topic"
-            />
-            <input type="submit" value="Publish" />
-            <p>{status}</p>
-          </form>
-        </Col>
-      </Row>
-    )
-  }
-
-  return (
-    <Container fluid="sm">
-      <Row className="p-5 justify-content-center">
-        <Col className="description rounded-3 align-self-center text-center shadow">
-          <h1 className="p-4 headline"><strong>Modbus</strong></h1>
-          <p className="lead text-muted pb-3"><b>IN PROGRESS</b><br />
-          Communicate with industrial devices</p>
-        </Col>
-      </Row>
-      <Connect />
-      <Publish />
-    </Container>
-  )
-}
-
 function App(props) {
   return (
     <div className="App">
@@ -573,7 +536,6 @@ function App(props) {
         <Route path="/variables"><Variables /></Route>
         <Route path="/mqtt"><MQTT /></Route>
         <Route path="/modbus"><Modbus /></Route>
-        <Route path="/chatbot"><Chatbot /></Route>
       </Switch>
       <Footer />
     </div>

@@ -240,8 +240,8 @@ function MQTT(props) {
 
     function handleSubmit(event){
       event.preventDefault();
-      const action = 'connect'
-      if(connected) { const action = 'disconnect' }
+      var action = 'connect'
+      if(connected) { action = 'disconnect' }
       axios.post('/mqtt', {
         action: action,
         host: hostname,
@@ -268,7 +268,7 @@ function MQTT(props) {
             />
             <input type="submit" value={connected ? 'Disconnect' : 'Connect'} />
           </form>
-          <p>{connected ? 'Connected to'+hostname : 'Not connected'}</p>
+          <p>{connected ? 'Connected to '+hostname : 'Not connected'}</p>
         </Col>
       </Row>
     )
@@ -288,10 +288,12 @@ function MQTT(props) {
 
     function handleSubmit(event) {
       event.preventDefault();
+
       if(!connected) {
         setStatus("Not connected to broker!")
         return
       }
+
       axios.post('/mqtt', {
         action: 'publish',
         payload: message.payload,
@@ -313,16 +315,16 @@ function MQTT(props) {
             <label for="payload">Enter message:</label>
             <input
               type="text"
+              name="payload"
               value={message.payload}
               onChange={handleChange}
-              name="payload"
             />
             <label for="topic">Enter topic:</label>
             <input
               type="text"
+              name="topic"
               value={message.topic}
               onChange={handleChange}
-              name="topic"
             />
             <input type="submit" value="Publish" />
             <p>{status}</p>
@@ -335,9 +337,18 @@ function MQTT(props) {
   function Subscribe() {
 
     const source = new EventSource('/events');
+    const [message, setMessage] = useState({
+      payload: '',
+      topic: '',
+    });
 
     source.addEventListener('subscription', function(event) {
-      setStatus(event.data);
+      const response = JSON.parse(event.data);
+      setMessage({
+        payload: response.payload,
+        topic: response.topic,
+      })
+      setStatus("");
     }, false);
 
     const [topic, setTopic] = useState('/topic');
@@ -350,6 +361,7 @@ function MQTT(props) {
         setStatus("Not connected to broker!")
         return
       }
+      setTopic(event.target.value)
       axios.post('/mqtt', {
         action: 'subscribe',
         topic: topic,
@@ -385,16 +397,18 @@ function MQTT(props) {
       <Row className="p-3 justify-content-center">
         <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <label for="payload">subscribe to topic:</label>
+            <label for="topic">Subscribe to topic:</label>
             <input
               type="text"
+              name="topic"
               value={topic}
-              onChange={event => setTopic(event.target.value)}
-              name="payload"
+              onChange={event => setHost(event.target.value)}
+              
             />
             <input type="submit" value="Subscribe" />
           </form>
           <p>{status}</p>
+          <p>Received {message.payload} from {message.topic}</p>
           <listSubs />
         </Col>
       </Row>

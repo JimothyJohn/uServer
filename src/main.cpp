@@ -1,4 +1,3 @@
-
 // Load relevant libraries
 #include <Arduino.h> //Base framework
 #include <ESP_WiFiManager.h> // AP login and maintenance
@@ -9,6 +8,27 @@
 #include <SPIFFS.h> // Enable file system
 #include <PubSubClient.h> // Enable MQTT
 #include <ArduinoJson.h> // Handle JSON messages
+#include <InfluxDbClient.h> // 
+#include <InfluxDbCloud.h>
+
+#if defined(ESP32)
+#define DEVICE "ESP32"
+#elif defined(ESP8266)
+#define DEVICE "ESP8266"
+#endif
+
+#define INFLUXDB_URL "http://10.0.0.28:8086"
+#define INFLUXDB_TOKEN "s7ETHxOg_FOl1QuIdPeJEbqmV3hB-xth0yueACkkgZ4s_9nwkYwXteGK118csqTKhlljaufIt3jHUiOOBEropA=="
+#define INFLUXDB_ORG "default"
+#define INFLUXDB_BUCKET "uServer"
+// Set timezone string according to https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+#define TZ_INFO "CST7CDT"
+
+// InfluxDB client instance with preconfigured InfluxCloud certificate
+InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
+
+// Data point
+Point sensor("mqtt");
 
 #define JSON_SIZE 128
 
@@ -17,6 +37,7 @@ uint8_t userVariable = 0;
 
 // Library classes
 AsyncWebServer server(80);
+AsyncWebSocket ws("/ws"); // access at ws://[esp ip]/ws
 AsyncEventSource events("/events");
 WiFiClient espClient;
 PubSubClient pubsubClient(espClient);
@@ -26,13 +47,30 @@ TaskHandle_t Task1;
 
 String jsonResponse(StaticJsonDocument<JSON_SIZE> doc) {
   String response;
-  response.reserve(1024);
+  response.reserve(JSON_SIZE);
   serializeJson(doc, response);
   return response;
 }
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
+}
+
+void WriteToInflux(char* topic, char* message) {
+  sensor.clearFields();
+
+  // Store measured value into point
+  sensor.addField("topic", topic);
+
+  // Print what are we exactly writing
+  Serial.print("Writing: ");
+  Serial.println(sensor.toLineProtocol());
+
+  // Write point
+  if (!client.writePoint(sensor)) {
+    Serial.print("InfluxDB write failed: ");
+    Serial.println(client.getLastErrorMessage());
+  }
 }
 
 // MQTT Handling functions
@@ -51,12 +89,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("\" from ");
   Serial.println(topic);
   
-  StaticJsonDocument<128> subDoc;
+  StaticJsonDocument<JSON_SIZE> subDoc;
   subDoc["payload"] = message;
   subDoc["topic"] = topic;
     
   const char* responseChar = jsonResponse(subDoc).c_str();
   events.send(responseChar, "subscription", millis());
+  WriteToInflux(topic, message);
 }
 
 void reconnect() {
@@ -91,53 +130,15 @@ void SetupMQTT(const char* hostname ) {
   reconnect();
 }
 
-void requestHandler(AsyncWebServerRequest *request) {
-  delay(10);
+// Generic request handler
+void requestHandler(AsyncWebServerRequest *request) { 
+  delay(1);
+  // Serial.println("Request handled!");
 }
 
-void fileHandler() {
-  delay(10);
-}
-
-void mqttHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-  Serial.println("Handled!");
-  StaticJsonDocument<128> mqttDoc;
-  DeserializationError error = deserializeJson(mqttDoc, data);
-  if (error) {
-    Serial.println(error.f_str());
-    return;
-  }
-
-  if (mqttDoc["action"]=="connect") {
-    const char* hostname = mqttDoc["host"];
-    SetupMQTT(hostname);
-    mqttDoc["code"] = 0;
-  }
-  else if (mqttDoc["action"]=="disconnect") {
-    Serial.println("Disconnecting from MQTT broker");
-    pubsubClient.disconnect();
-    if(!pubsubClient.connected()) { mqttDoc["code"] = 0; }
-    else { mqttDoc["code"] = 1; }
-  }
-  else if (mqttDoc["action"]=="publish") {
-    const char* payload = mqttDoc["payload"];
-    const char* topic = mqttDoc["topic"];
-    Serial.print("Publishing ");
-    Serial.print(payload);
-    Serial.print(" to ");
-    Serial.println(topic);
-    bool published = pubsubClient.publish(topic, payload);
-    if(!published) { mqttDoc["code"] = 1; }
-    else { mqttDoc["code"] = 0; }
-  }
-  else if (mqttDoc["action"]=="subscribe") {
-    const char* topic = mqttDoc["topic"];
-    bool subscribed = pubsubClient.subscribe(topic);
-    if(!subscribed) { mqttDoc["code"] = 1; }
-    else { mqttDoc["code"] = 0; }
-  }
-  
-  request->send(200, "application/json", jsonResponse(mqttDoc));
+// Generic file handler
+void fileHandler(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+  Serial.println("File handled!");
 }
 
 // Set up server callback functions
@@ -158,17 +159,14 @@ void SetupServer() {
   });
 
   // IO JSON message parser 
-  server.on("/io", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    delay(1);
-  },
+  server.on("/io", HTTP_POST, requestHandler,
   [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
   {
     delay(1);
   },
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
   {
-    StaticJsonDocument<128> ioDoc;
+    StaticJsonDocument<JSON_SIZE> ioDoc;
     DeserializationError error = deserializeJson(ioDoc, data);
     if (error) {
       Serial.println(error.f_str());
@@ -190,17 +188,14 @@ void SetupServer() {
   });
 
   // Variable JSON message parser 
-  server.on("/variables", HTTP_POST, [](AsyncWebServerRequest *request)
-  {
-    delay(1);
-  },
+  server.on("/variables", HTTP_POST, requestHandler,
   [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
   {
     delay(1);
   },
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
   {
-    StaticJsonDocument<128> variableDoc;
+    StaticJsonDocument<JSON_SIZE> variableDoc;
     DeserializationError error = deserializeJson(variableDoc, data);
     if (error) {
       Serial.println(error.f_str());
@@ -214,9 +209,46 @@ void SetupServer() {
   });
 
   // Variable JSON message parser 
-  server.on("/mqtt", HTTP_POST, [](AsyncWebServerRequest *request) { },
-  [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) { },
-  mqttHandler);
+  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler,
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+    StaticJsonDocument<JSON_SIZE> mqttDoc;
+    DeserializationError error = deserializeJson(mqttDoc, data);
+    if (error) {
+      Serial.println(error.f_str());
+      return;
+    }
+
+    if (mqttDoc["action"]=="connect") {
+      const char* hostname = mqttDoc["host"];
+      SetupMQTT(hostname);
+      mqttDoc["code"] = 0;
+    }
+    else if (mqttDoc["action"]=="disconnect") {
+      Serial.println("Disconnecting from MQTT broker");
+      pubsubClient.disconnect();
+      if(!pubsubClient.connected()) { mqttDoc["code"] = 0; }
+      else { mqttDoc["code"] = 1; }
+    }
+    else if (mqttDoc["action"]=="publish") {
+      const char* payload = mqttDoc["payload"];
+      const char* topic = mqttDoc["topic"];
+      Serial.print("Publishing ");
+      Serial.print(payload);
+      Serial.print(" to ");
+      Serial.println(topic);
+      bool published = pubsubClient.publish(topic, payload);
+      if(!published) { mqttDoc["code"] = 1; }
+      else { mqttDoc["code"] = 0; }
+    }
+    else if (mqttDoc["action"]=="subscribe") {
+      const char* topic = mqttDoc["topic"];
+      bool subscribed = pubsubClient.subscribe(topic);
+      if(!subscribed) { mqttDoc["code"] = 1; }
+      else { mqttDoc["code"] = 0; }
+    }
+    
+    request->send(200, "application/json", jsonResponse(mqttDoc));
+  });
 
   events.onConnect([](AsyncEventSourceClient *client){
     if(client->lastId()){
@@ -284,7 +316,7 @@ void SetupWiFi() {
   }
 }
 
-// WebServer Task 
+// Auxiiliary Task 
 void Task1code( void * pvParameters ) {
   Serial.print("Auxiliary task running on core ");
   Serial.println(xPortGetCoreID());
@@ -330,7 +362,24 @@ void setup() {
                     NULL,        /* parameter of the task */
                     1,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
+                    0);          /* pin task to core 0 */
+                    
+  // Add tags
+  sensor.addTag("device", DEVICE);
+
+  // Accurate time is necessary for certificate validation and writing in batches
+  // For the fastest time sync find NTP servers in your area: https://www.pool.ntp.org/zone/
+  // Syncing progress and the time will be printed to Serial.
+  timeSync(TZ_INFO, "pool.ntp.org", "time.nis.gov");
+
+  // Check server connection
+  if (client.validateConnection()) {
+    Serial.print("Connected to InfluxDB: ");
+    Serial.println(client.getServerUrl());
+  } else {
+    Serial.print("InfluxDB connection failed: ");
+    Serial.println(client.getLastErrorMessage());
+  }               
 }
 
 // Main loop

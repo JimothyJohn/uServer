@@ -1,6 +1,13 @@
 // App.js
 const { BrowserRouter, Switch, Route, Link } = ReactRouterDOM;
-const { Container, Row, Col, Navbar, Nav } = ReactBootstrap;
+const {
+  Container,
+  Row,
+  Col,
+  Navbar,
+  Nav,
+  ListGroup
+} = ReactBootstrap;
 const { useState } = React;
 
 const error_codes = {
@@ -379,18 +386,26 @@ function MQTT(props) {
     };
     
     function renderSub(sub) {
+
       return(
-        <li >{sub}</li>
+        <Row>
+          <ListGroup.Item active={message.topic==sub}>{sub}</ListGroup.Item>
+          <p className="message">{message.topic==sub ? message.payload : ""}</p>
+        </Row>
       );
     }
 
-    // Automate navbar link creation
-    function listSubs() {
+    function ListSubs() {
       const subList = [];
       for (var i=0; i<subs.length; i++) {
         subList.push(renderSub(subs[i]));
       };
-      return ( <ul>{subList}</ul> );
+      return (
+        <Col className="col-4 align-self-center text-center">
+          <h>Active subscriptions:</h>
+          <ListGroup>{subList}</ListGroup>
+        </Col>
+      );
     }
 
     return (
@@ -402,15 +417,14 @@ function MQTT(props) {
               type="text"
               name="topic"
               value={topic}
-              onChange={event => setHost(event.target.value)}
-              
+              onChange={event => setTopic(event.target.value)}
             />
             <input type="submit" value="Subscribe" />
           </form>
           <p>{status}</p>
           <p>Received {message.payload} from {message.topic}</p>
-          <listSubs />
         </Col>
+        <ListSubs />
       </Row>
     )
   }

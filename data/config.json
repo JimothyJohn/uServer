@@ -1,0 +1,4 @@
+{
+    "mqtt": "jetson",
+    "modbus": "robot"
+}

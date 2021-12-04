@@ -24,4 +24,5 @@ See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 
 * Add security/authentication
 * Port to other platforms
-* <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage</a>
+* <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage via microSD</a>
+* Convert to more consistent formatting

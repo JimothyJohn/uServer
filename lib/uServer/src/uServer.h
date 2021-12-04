@@ -9,15 +9,18 @@
 #define uServer_h
 
 #include "Arduino.h"
-#include "ESP_WiFiManager.h" // AP login and maintenance
+// #include "ESP_WiFiManager.h" // AP login and maintenance
 #include "ArduinoJson.h" // Handle JSON messages
-#include "AsyncTCP.h" // Generic async library
-#include "ESPAsyncWebServer.h" // ESP32 async library
+#include <FS.h>          // Get FS functions
+#include <SPIFFS.h>      // Enable file system
+// #include "AsyncTCP.h" // Generic async library
+// #include "ESPAsyncWebServer.h" // ESP32 async library
 
-String jsonResponse(StaticJsonDocument<128> doc);
-
-void notFound(AsyncWebServerRequest *request);
-
-void SetupServer();
+// Send JSON message in a response string
+String jsonResponse(StaticJsonDocument<JSON_SIZE> doc);
+// List directories in SPIFFS
+StaticJsonDocument<JSON_SIZE> listDir(fs::FS &fs, const char *dirname, uint8_t levels);
+// Read JSON file
+StaticJsonDocument<JSON_SIZE> readFile(fs::FS &fs, const char *filename);
 
 #endif

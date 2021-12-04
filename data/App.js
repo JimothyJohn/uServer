@@ -29,7 +29,7 @@ function NavBar(props) {
               <Nav.Link as={Link} to="/io">Digital I/O</Nav.Link>
               <Nav.Link as={Link} to="/variables">Variables</Nav.Link>
               <Nav.Link as={Link} to="/mqtt">MQTT</Nav.Link>
-              <Nav.Link as={Link} to="/modbus">Modbus</Nav.Link>
+              <Nav.Link as={Link} to="/files">File System</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -40,18 +40,18 @@ function NavBar(props) {
 
 function Footer(props) {
 
-    return(
-      <footer>
-        <Container fluid="sm" className="fixed-bottom">
-          <Row>
-            <Col className="text-center">
-              <a href="http://advin.io/"><img src="https://drive.google.com/uc?id=19gtVzQTrjAqPSP7G1lUsRx8mjidmgyCA" width="150px" /></a>
-              <p>Copyright © 2020 advin.io. All rights reserved.</p>
-            </Col>
-          </Row>
-        </Container>
-      </footer>
-    )
+  return (
+    <footer>
+      <Container fluid="sm" className="fixed-bottom">
+        <Row>
+          <Col className="text-center">
+            <a href="http://advin.io/"><img src="https://drive.google.com/uc?id=19gtVzQTrjAqPSP7G1lUsRx8mjidmgyCA" width="150px" /></a>
+            <p>Copyright © 2020 advin.io. All rights reserved.</p>
+          </Col>
+        </Row>
+      </Container>
+    </footer>
+  )
 }
 
 function About(props) {
@@ -87,35 +87,35 @@ function IO(props) {
       action: 'read',
       pin: event.target.value,
     })
-    .then(function (response) {
-      setInput({
-        pin: response.data.pin,
-        state: response.data.state,
+      .then(function (response) {
+        setInput({
+          pin: response.data.pin,
+          state: response.data.state,
+        })
       })
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+      .catch(function (error) {
+        console.log(error);
+      });
   }
 
-  function writeOutput(event){
+  function writeOutput(event) {
     event.preventDefault();
     axios.post('/io', {
       action: 'write',
-      pin: output.pin, 
+      pin: output.pin,
       state: event.target.value,
     })
-    .then(function (response) {
-      setOutput(prevState => {
-        return {
-          ...prevState,
-          state: response.data.state,
-        };
+      .then(function (response) {
+        setOutput(prevState => {
+          return {
+            ...prevState,
+            state: response.data.state,
+          };
+        });
+      })
+      .catch(function (error) {
+        console.log(error);
       });
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
   };
 
   function chooseOutput(event) {
@@ -133,10 +133,10 @@ function IO(props) {
     <Container fluid="sm">
       <Row className="p-5 justify-content-center">
         <Col className="description rounded-3 align-self-center text-center shadow">
-            <h1 className="p-4 headline"><strong>Digital I/O</strong></h1>
-            <p className="lead text-muted pb-3">
-              Use buttons to set outputs and text to
-              read inputs all via web browser.
+          <h1 className="p-4 headline"><strong>Digital I/O</strong></h1>
+          <p className="lead text-muted pb-3">
+            Use buttons to set outputs and text to
+            read inputs all via web browser.
             </p>
         </Col>
       </Row>
@@ -149,7 +149,7 @@ function IO(props) {
         </Col>
       </Row>
       <Row className="justify-content-center">
-      <Col className="col-4 align-self-center text-center">
+        <Col className="col-4 align-self-center text-center">
           <form>
             <select
               value={input.pin}
@@ -166,10 +166,10 @@ function IO(props) {
         </Col>
         <Col className="col-4 align-self-center text-center">
           <form>
-            <select 
-            value={output.pin}
-            className="form-control"
-            onChange={chooseOutput}>
+            <select
+              value={output.pin}
+              className="form-control"
+              onChange={chooseOutput}>
               <option>Choose an output...</option>
               <option value={0}>0</option>
               <option value={1}>1</option>
@@ -198,12 +198,12 @@ function Variables(props) {
     axios.post('/variables', {
       postInt: event.target.value,
     })
-    .then(function (response) {
-      console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
   }
 
   return (
@@ -212,7 +212,7 @@ function Variables(props) {
         <Col className="description rounded-3 align-self-center text-center shadow">
           <h1 className="p-4 headline"><strong>Variables</strong></h1>
           <p className="lead text-muted pb-3">
-            Use forms and inputs to set variables and 
+            Use forms and inputs to set variables and
             parameters all via web browser.
           </p>
         </Col>
@@ -240,26 +240,24 @@ function Variables(props) {
 function MQTT(props) {
 
   const [connected, setConnected] = useState(false)
-  
+
   function Connect() {
-    
+
     const [hostname, setHost] = useState("10.0.0.28");
 
-    function handleSubmit(event){
+    function handleSubmit(event) {
       event.preventDefault();
       var action = 'connect'
-      if(connected) { action = 'disconnect' }
+      if (connected) { action = 'disconnect' }
       axios.post('/mqtt', {
         action: action,
         host: hostname,
       })
-      .then(function (response) {
-        if (response.data.code==0) { setConnected(!connected); }
-        else { setConnected(false); }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+        .then(response => {
+          if (response.data.code == 0) { setConnected(!connected); }
+          else { setConnected(false); }
+        })
+        .catch(error => { console.log(error); });
     };
 
     return (
@@ -275,7 +273,7 @@ function MQTT(props) {
             />
             <input type="submit" value={connected ? 'Disconnect' : 'Connect'} />
           </form>
-          <p>{connected ? 'Connected to '+hostname : 'Not connected'}</p>
+          <p>{connected ? 'Connected to ' + hostname : 'Not connected'}</p>
         </Col>
       </Row>
     )
@@ -290,13 +288,13 @@ function MQTT(props) {
     const [status, setStatus] = useState("")
 
     const handleChange = (event) => {
-      setMessage({...message, [event.target.name]: event.target.value});
+      setMessage({ ...message, [event.target.name]: event.target.value });
     }
 
     function handleSubmit(event) {
       event.preventDefault();
 
-      if(!connected) {
+      if (!connected) {
         setStatus("Not connected to broker!")
         return
       }
@@ -306,13 +304,11 @@ function MQTT(props) {
         payload: message.payload,
         topic: message.topic,
       })
-      .then(function (response) {
-        if(response.data.code>0) { setStatus("Failed to publish!") }
-        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic)}
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+        .then(response => {
+          if (response.data.code > 0) { setStatus("Failed to publish!") }
+          else { setStatus("Sent \"" + response.data.payload + "\" to " + response.data.topic) }
+        })
+        .catch(function (error) { console.log(error); });
     };
 
     return (
@@ -349,7 +345,7 @@ function MQTT(props) {
       topic: '',
     });
 
-    source.addEventListener('subscription', function(event) {
+    source.addEventListener('subscription', function (event) {
       const response = JSON.parse(event.data);
       setMessage({
         payload: response.payload,
@@ -364,7 +360,7 @@ function MQTT(props) {
 
     function handleSubmit(event) {
       event.preventDefault();
-      if(!connected) {
+      if (!connected) {
         setStatus("Not connected to broker!")
         return
       }
@@ -373,31 +369,31 @@ function MQTT(props) {
         action: 'subscribe',
         topic: topic,
       })
-      .then(function (response) {
-        if(response.data.code>0) { setStatus("Failed to subscribe!") }
-        else { 
-          setSubs(subs.concat(topic));
-          setStatus("Subscribed to \""+topic);
-        }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+        .then(function (response) {
+          if (response.data.code > 0) { setStatus("Failed to subscribe!") }
+          else {
+            setSubs(subs.concat(topic));
+            setStatus("Subscribed to \"" + topic);
+          }
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     };
-    
+
     function renderSub(sub) {
 
-      return(
+      return (
         <Row>
-          <ListGroup.Item active={message.topic==sub}>{sub}</ListGroup.Item>
-          <p className="message">{message.topic==sub ? message.payload : ""}</p>
+          <ListGroup.Item active={message.topic == sub}>{sub}</ListGroup.Item>
+          <p className="message">{message.topic == sub ? message.payload : ""}</p>
         </Row>
       );
     }
 
     function ListSubs() {
       const subList = [];
-      for (var i=0; i<subs.length; i++) {
+      for (var i = 0; i < subs.length; i++) {
         subList.push(renderSub(subs[i]));
       };
       return (
@@ -445,112 +441,136 @@ function MQTT(props) {
   )
 }
 
-function Modbus(props) {
+function ReadFiles(props) {
 
-  const [connected, setConnected] = useState(false)
-  const [hostname, setHost] = useState("10.0.0.28");
+  const [config, setConfig] = useState({
+    filename: "",
+    contents: {},
+  });
 
-  function Connect(props) {
+  const [directory, setDirectory] = useState({
+    files: [],
+    dirs: [],
+    dir: "/config/mqtt",
+  });
 
-    function handleSubmit(event){
+  function ChooseDirectory() {
+
+    function handleSubmit(event) {
       event.preventDefault();
-      axios.post('/modbus', {
-        host: hostname,
+      axios.post('/files', { dir: directory.dir, })
+      .then(response => {
+        setDirectory(prevState => {
+          return {
+            ...prevState,
+            files: response.data
+          }
+        });
       })
-      .then(function (response) {
-        if (response.data.code==0) { setConnected(true); }
-        else { setConnected(false); }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-    };
+      .catch(error => console.log(error));
+    }
 
-    function ConnectionStatus(props) {
-      if (connected) { return <p>Connected!</p> }
-      else { return <p>Not connected</p>}
+    const handleChange = (event) => {
+      setDirectory(prevState => {
+        return {
+          ...prevState,
+          dir: event.target.value,
+        };
+      });
+    }
+
+    function ListFiles() {
+      if (directory.files.length>0) {
+        return ( directory.files.map(file => (
+          <li>{file.name.split("/")[3]}</li>
+        )));
+      } else { return ( <li>Empty</li> ); }
     }
 
     return (
       <Row className="p-3 justify-content-center">
         <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <label for="hostname">Enter hostname:</label>
-            <input
-              type="text"
-              value={hostname}
-              onChange={e => setHost(e.target.value)}
-              name="hostname"
-            />
-            <input type="submit" value="Connect" />
+            <label for="dir">Enter directory...</label>
+            <select
+              value={directory.dir}
+              className="form-control"
+              onChange={handleChange}>
+              <option value={"/config/mqtt"}>MQTT</option>
+              <option value={"/config/ws"}>WebSocket</option>
+              <option value={"/config/Modbus"}>Modbus</option>
+            </select>
+            <input type="submit" value="Read Directory" />
           </form>
-          <ConnectionStatus />
+          <ul><ListFiles /></ul>
         </Col>
-      </Row>
-    )
+      </Row >
+    );
   }
 
-  function Publish(props) {
+  function ChooseFile() {
 
-    const [message, setMessage] = useState({
-      payload: 'Hello world!',
-      topic: '/topic',
-    });
-    const [status, setStatus] = useState("")
-
-    function handleSubmit(event){
+    function handleSubmit(event) {
       event.preventDefault();
-      axios.post('/modbus', {
-        payload: message.payload,
-        topic: message.topic,
-      })
-      .then(function (response) {
-        if(response.data.code>0) { setStatus("Failed to publish!") }
-        else { setStatus("Sent \""+response.data.payload+"\" to "+response.data.topic+" at "+hostname)}
-      })
-      .catch(function (error) {
-        console.log(error);
+      axios.post('/file', { filename: event.target.value, })
+        .then(response => {
+          setConfig(prevState => {
+            return {
+              ...prevState,
+              contents: response.data,
+            }
+          });
+        })
+        .catch(error => console.log(error));
+    };
+
+    const handleChange = (event) => {
+      setConfig(prevState => {
+        return {
+          ...prevState,
+          filename: event.target.value,
+        };
       });
+    }
+
+    function FileOptions() {
+      if (directory.files.length>0) {
+        return ( directory.files.map(file => (
+          <option value={file.name}>{file.name.split("/")[3]}</option>
+        )));
+      } else { return ( <option>Empty</option> ); }
     };
 
     return (
       <Row className="p-3 justify-content-center">
         <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <label for="payload">Enter message:</label>
-            <input
-              type="text"
-              value={message.payload}
-              onChange={e => setMessage({payload: e.target.value})}
-              name="payload"
-            />
-            <label for="topic">Enter topic:</label>
-            <input
-              type="text"
-              value={message.topic}
-              onChange={e => setMessage({topic: e.target.value})}
-              name="topic"
-            />
-            <input type="submit" value="Publish" />
-            <p>{status}</p>
+            <label for="file">Choose a file...</label>
+            <select
+              value={config.filename}
+              className="form-control"
+              onChange={handleChange}>
+              <FileOptions />
+            </select>
+            <input type="submit" value="Read File" />
           </form>
         </Col>
-      </Row>
-    )
+      </Row >
+    );
   }
 
   return (
-    <Container fluid="sm">
-      <Row className="p-5 justify-content-center">
-        <Col className="description rounded-3 align-self-center text-center shadow">
-          <h1 className="p-4 headline"><strong>Modbus</strong></h1>
-          <p className="lead text-muted pb-3"><b>IN PROGRESS</b><br />
-          Communicate with industrial devices</p>
-        </Col>
-      </Row>
-      <Connect />
-      <Publish />
-    </Container>
+    <div className="App">
+      <Container fluid="sm">
+        <Row className="p-5 justify-content-center">
+          <Col className="description rounded-3 align-self-center text-center shadow">
+            <h1 className="p-4 headline"><strong>File Browser</strong></h1>
+            <p className="lead text-muted pb-3">Browse the file system and read JSON configs!</p>
+          </Col>
+        </Row>
+        <ChooseDirectory />
+      </Container>
+    </div>
   )
 }
 
@@ -563,7 +583,7 @@ function App(props) {
         <Route path="/io"><IO /></Route>
         <Route path="/variables"><Variables /></Route>
         <Route path="/mqtt"><MQTT /></Route>
-        <Route path="/modbus"><Modbus /></Route>
+        <Route path="/files"><ReadFiles /></Route>
       </Switch>
       <Footer />
     </div>

@@ -22,7 +22,7 @@ See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 
 ## Capabilities
 
-uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. Endpoints:
+uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. See ['API'](API.md) for examples. Endpoints:
 
 * /io - Read input statuses or change output states
 * /variables - Change a user variable

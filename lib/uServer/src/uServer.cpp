@@ -245,77 +245,6 @@ void uServer::begin()
         variableDoc.clear();
       });
 
-  // MQTT Handler
-  /*
-  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-              StaticJsonDocument<JSON_SIZE> mqttDoc;
-              DeserializationError error = deserializeJson(mqttDoc, data);
-              if (error)
-              {
-                Serial.println(error.f_str());
-                return;
-              }
-
-              if (mqttDoc["action"] == "connect")
-              {
-                const char *hostname = mqttDoc["host"];
-                pubsubClient.setServer(hostname, 1883);
-                pubsubClient.setCallback(callback);
-                reconnect(pubsubClient);
-                mqttDoc["code"] = 0;
-              }
-              else if (mqttDoc["action"] == "disconnect")
-              {
-                Serial.println("Disconnecting from MQTT broker");
-                pubsubClient.disconnect();
-                if (!pubsubClient.connected())
-                {
-                  mqttDoc["code"] = 0;
-                }
-                else
-                {
-                  mqttDoc["code"] = 1;
-                }
-              }
-              else if (mqttDoc["action"] == "publish")
-              {
-                const char *payload = mqttDoc["payload"];
-                const char *topic = mqttDoc["topic"];
-                Serial.print("Publishing ");
-                Serial.print(payload);
-                Serial.print(" to ");
-                Serial.println(topic);
-                bool published = pubsubClient.publish(topic, payload);
-                if (!published)
-                {
-                  mqttDoc["code"] = 1;
-                }
-                else
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-              else if (mqttDoc["action"] == "subscribe")
-              {
-                const char *topic = mqttDoc["topic"];
-                bool subscribed = pubsubClient.subscribe(topic);
-                if (!subscribed)
-                {
-                  mqttDoc["code"] = 1;
-                }
-                else
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-
-              serializeJson(mqttDoc, Serial);
-              request->send(200, "application/json", jsonResponse(mqttDoc));
-              mqttDoc.clear();
-            });
-  */
-
   // Variable JSON message parser
   server.on("/files", HTTP_POST, requestHandler, fileHandler,
             [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -380,4 +309,68 @@ void uServer::begin()
 
   server.onNotFound(notFound);
   server.begin();
+}
+
+// MQTT Handler
+void uServer::mqttControl()
+{
+  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler,
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+              StaticJsonDocument<JSON_SIZE> mqttDoc;
+              DeserializationError error = deserializeJson(mqttDoc, data);
+              if (error)
+              {
+                Serial.println(error.f_str());
+                return;
+              }
+              Serial.println("/mqtt received");
+              serializeJsonPretty(mqttDoc, Serial);
+              Serial.println();
+
+              mqttDoc["code"] = 1;
+
+              if (mqttDoc["action"] == "connect" && !pubsubClient.connected())
+              {
+                const char *hostname = mqttDoc["host"];
+                pubsubClient.setServer(hostname, 1883);
+                pubsubClient.setCallback(callback);
+                reconnect(pubsubClient);
+                if (pubsubClient.connected())
+                {
+                  mqttDoc["code"] = 0;
+                }
+              }
+              else if (mqttDoc["action"] == "disconnect" && pubsubClient.connected())
+              {
+                Serial.println("Disconnecting from MQTT broker");
+                pubsubClient.disconnect();
+                if (!pubsubClient.connected())
+                {
+                  mqttDoc["code"] = 0;
+                }
+              }
+              else if (mqttDoc["action"] == "publish")
+              {
+                const char *payload = mqttDoc["payload"];
+                const char *topic = mqttDoc["topic"];
+                if (pubsubClient.publish(topic, payload))
+                {
+                  mqttDoc["code"] = 0;
+                }
+              }
+              else if (mqttDoc["action"] == "subscribe")
+              {
+                const char *topic = mqttDoc["topic"];
+                if (pubsubClient.subscribe(topic))
+                {
+                  mqttDoc["code"] = 0;
+                }
+              }
+
+              Serial.println("/mqtt response");
+              serializeJsonPretty(mqttDoc, Serial);
+              Serial.println();
+              request->send(200, "application/json", jsonResponse(mqttDoc));
+              mqttDoc.clear();
+            });
 }

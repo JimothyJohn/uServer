@@ -34,8 +34,8 @@ void fileHandler(AsyncWebServerRequest *request, const String &filename, size_t 
 
 void reconnect(PubSubClient client);
 void SetupMQTT(PubSubClient client, const char *hostname);
-// WiFiClient wifiClient;
-// PubSubClient pubsubClient(wifiClient);
+static WiFiClient wifiClient;
+static PubSubClient pubsubClient(wifiClient);
 void callback(char *topic, byte *payload, unsigned int length);
 
 // Custom WebServer
@@ -44,6 +44,7 @@ class uServer
 public:
   uServer();
   void begin();
+  void mqttControl();
   AsyncWebServer server = AsyncWebServer(80);
   AsyncEventSource events = AsyncEventSource("/events"); // access at ws://[esp ip]/w
   AsyncWebSocket ws = AsyncWebSocket("/ws");

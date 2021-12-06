@@ -104,13 +104,11 @@ void Task1code(void *pvParameters)
 
   for (;;)
   {
-    ArduinoOTA.handle();
-    /*
+    // ArduinoOTA.handle();
     if (pubsubClient.connected())
     {
       pubsubClient.loop();
     }
-    */
     // DELETING THIS DELAY WILL CRASH THE MCU
     delay(25);
   }
@@ -132,6 +130,7 @@ void setup()
   SetupWiFi();
   // Configures Async web server
   myserver.begin();
+  myserver.mqttControl();
   // Configures over-the-air updates
   SetupOTA();
   // mDNS allows for connection at http://userver.local/

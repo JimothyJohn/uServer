@@ -1,7 +1,7 @@
 # API Overview
 
 ## I/O
-Read status of GPIO0 at "http://userver.local/io" example.
+Read status of GPIO0 at http://userver.local/io example.
 
 #### Request
 
@@ -24,7 +24,7 @@ Read status of GPIO0 at "http://userver.local/io" example.
 ```
 
 ## Variables 
-Change variable value at "http://userver.local/variables" example.
+Change variable value at http://userver.local/variables example.
 
 #### Request
 
@@ -44,7 +44,7 @@ Change variable value at "http://userver.local/variables" example.
 ```
 
 ## MQTT
-Connect to new MQTT broker at "http://userver.local/mqtt" example:
+Connect to new MQTT broker at http://userver.local/mqtt example:
 
 #### Request
 
@@ -64,7 +64,7 @@ Connect to new MQTT broker at "http://userver.local/mqtt" example:
 ```
 
 ## File system
-Read files in directory at "http://userver.local/files" example:
+Read files in directory at http://userver.local/files example:
 
 #### Request
 

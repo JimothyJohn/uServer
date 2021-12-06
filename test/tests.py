@@ -42,6 +42,7 @@ def ReadDirectory(dirname):
     print(f"Reading {dirname} directory...", end="")
     r = requests.post(f'{BASE_URL}/files', data=payload)
     response = json.loads(r.text)
+    assert len(response) > 0
     print(f"First file in directory: {response[0]['name']}")
     return True
 
@@ -55,12 +56,40 @@ def ReadFile(filename):
     return True
 
 
+def ConnectMQTT(action, hostname="127.0.0.1"):
+    payload = json.dumps({'action': action, 'host': hostname})
+    if action == 'connect': print(f"Connecting to {hostname}...", end="")
+    else: print(f'Disconnecting...', end="")
+    r = requests.post(f'{BASE_URL}/mqtt', data=payload)
+    response = json.loads(r.text)
+    print(f"Confirmation code: {response['code']}")
+    assert response['code'] == 0
+    return True
+
+
+def PublishMQTT(topic, payload):
+    payload = json.dumps({
+        'action': 'publish',
+        'topic': topic,
+        'payload': payload
+    })
+    print(f"Publishing \"{payload}\" to {topic}...", end="")
+    r = requests.post(f'{BASE_URL}/mqtt', data=payload)
+    response = json.loads(r.text)
+    print(f"Confirmation code: {response['code']}")
+    assert response['code'] == 0
+    return True
+
+
 def RunTests():
     assert ReadInput(0)
     assert SetOutput(0, 1)
     assert SetVariable(32)
     assert ReadDirectory("/config/mqtt")
     assert ReadFile("/config/mqtt/jetson.json")
+    assert ConnectMQTT("connect", "10.0.0.28")
+    assert ConnectMQTT("disconnect")
+    # assert PublishMQTT("/topic", "Hello world!")
     return True
 
 

@@ -445,7 +445,7 @@ function ReadFiles(props) {
 
   const [config, setConfig] = useState({
     filename: "",
-    contents: {},
+    contents: { hostnaee: "127.0.0.1", topics: [] },
   });
 
   const [directory, setDirectory] = useState({
@@ -459,15 +459,21 @@ function ReadFiles(props) {
     function handleSubmit(event) {
       event.preventDefault();
       axios.post('/files', { dir: directory.dir, })
-      .then(response => {
-        setDirectory(prevState => {
-          return {
-            ...prevState,
-            files: response.data
-          }
-        });
-      })
-      .catch(error => console.log(error));
+        .then(response => {
+          setDirectory(prevState => {
+            return {
+              ...prevState,
+              files: response.data
+            }
+          });
+          setConfig(prevState => {
+            return {
+              ...prevState,
+              filename: response.data[0].name
+            }
+          });
+        })
+        .catch(error => console.log(error));
     }
 
     const handleChange = (event) => {
@@ -479,26 +485,35 @@ function ReadFiles(props) {
       });
     }
 
+    function handleClick() {
+      setDirectory(prevState => {
+        return {
+          ...prevState,
+          files: [{ name: "///Reading..." }]
+        };
+      });
+    }
+
     function ListFiles() {
-      if (directory.files.length>0) {
-        return ( directory.files.map(file => (
+      if (directory.files.length > 0) {
+        return (directory.files.map(file => (
           <li>{file.name.split("/")[3]}</li>
         )));
-      } else { return ( <li>Empty</li> ); }
+      } else { return (<li>Empty</li>); }
     }
 
     return (
       <Row className="p-3 justify-content-center">
         <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <label for="dir">Enter directory...</label>
+            <label for="dir">Choose directory...</label>
             <select
               value={directory.dir}
               className="form-control"
               onChange={handleChange}>
               <option value={"/config/mqtt"}>MQTT</option>
               <option value={"/config/ws"}>WebSocket</option>
-              <option value={"/config/Modbus"}>Modbus</option>
+              <option value={"/config/modbus"}>Modbus</option>
             </select>
             <input type="submit" value="Read Directory" />
           </form>
@@ -512,7 +527,7 @@ function ReadFiles(props) {
 
     function handleSubmit(event) {
       event.preventDefault();
-      axios.post('/file', { filename: event.target.value, })
+      axios.post('/file', { filename: config.filename, })
         .then(response => {
           setConfig(prevState => {
             return {
@@ -531,14 +546,18 @@ function ReadFiles(props) {
           filename: event.target.value,
         };
       });
-    }
+    };
 
     function FileOptions() {
-      if (directory.files.length>0) {
-        return ( directory.files.map(file => (
+      if (directory.files.length > 0) {
+        return (directory.files.map(file => (
           <option value={file.name}>{file.name.split("/")[3]}</option>
         )));
-      } else { return ( <option>Empty</option> ); }
+      } else { return (<option>Empty</option>); }
+    };
+
+    function DisplayContents() {
+      return config.contents.map(item => (<option value={item}>{item}</option>));
     };
 
     return (
@@ -554,6 +573,8 @@ function ReadFiles(props) {
             </select>
             <input type="submit" value="Read File" />
           </form>
+          <p>{config.contents.hostname}</p>
+          <p>{config.contents.topics}</p>
         </Col>
       </Row >
     );
@@ -569,6 +590,7 @@ function ReadFiles(props) {
           </Col>
         </Row>
         <ChooseDirectory />
+        <ChooseFile />
       </Container>
     </div>
   )

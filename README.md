@@ -20,6 +20,16 @@ See [`Features`](FEATURES.md) for full list of features and examples.
 
 See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
 
+## Capabilities
+
+uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. Endpoints:
+
+* /io - Read input statuses or change output states
+* /variables - Change a user variable
+* /mqtt - Connect, publish, and subscribe
+* /files - List files in a directory
+* /file - Read contents of .json configuration file
+
 ## To-do List
 
 * Fix MQTT endpoint

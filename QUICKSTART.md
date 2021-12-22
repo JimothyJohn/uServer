@@ -11,14 +11,13 @@ OPTIONAL (Linux) - I also like to create the alias "platformio" to quickly activ
 
 ```bash 
 # Create alias
-user@host:~$ echo "alias platformio=\". ~/.platformio/penv/bin/activate\"" >> ~/.bashrc && . ~/.bashrc
+echo "alias platformio=\". ~/.platformio/penv/bin/activate\"" >> ~/.bashrc && . ~/.bashrc
 # Try it out!
-user@host:~$ platformio
-# You should now see
-(penv) user@host:~$
+platformio
+echo "You should now see: (penv) user@host:~$"
 ```
 
-Configure [`platform.ini`](platform.ini) for USB upload:
+Configure [platform.ini](platform.ini) for USB upload:
 
 ```ini 
 upload_port = /dev/ttyUSB0 # CHANGE THIS IF NOT ON LINUX
@@ -32,20 +31,12 @@ monitor_speed = 115200
 Move to root of repository and upload both the file system and program via IDE or command line as shown below (make sure penv is activated first):
 
 ```bash
-(penv) user@host:~$ cd uServer
-(penv) user@host:~/uServer$ pio run -t uploadfs
-(penv) user@host:~/uServer$ pio run -t upload
+git clone https://github.com/JimothyJohn/uServer/
+cd uServer
+echo "Make sure (penv) is activated!"
+pio run -t upload && pio run -t uploadfs
 ```
 
-Go to your phone/PC's Wi-Fi settings and use access point "uServer" to connect the ESP32 to your Wi-Fi, then finalize your [`platform.ini`](platform.ini) configuration:
+Go to your phone/PC's Wi-Fi settings and use access point "uServer" to connect the ESP32 to your Wi-Fi.
 
-```ini
-# I leave these comments in case I need to troubleshoot locally
-# upload_port = /dev/ttyUSB0
-# monitor_port = /dev/ttyUSB0
-monitor_speed = 115200
-upload_protocol = espota
-upload_port = userver.local
-```
-
-Your device is permanently configured to connect to your Wi-Fi on bootup so future uploads can now be over-the-air! Connect to your device on the same network at http://userver.local/.
+Your device is permanently configured to connect to your Wi-Fi on bootup. Connect to your device on the same network at http://userver.local/.

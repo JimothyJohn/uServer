@@ -9,12 +9,28 @@ const {
   ListGroup
 } = ReactBootstrap;
 const { useState } = React;
+// const { NavBar } = uServer;
 
 const error_codes = {
   0: 'Success',
   1: 'Failure',
   2: 'No response',
 };
+
+function Banner(props) {
+
+  return (
+    <Container fluid="sm">
+      <Row className="p-5 justify-content-center">
+        <Col className="description rounded-3 align-self-center text-center shadow">
+          <h1 className="p-4 headline"><strong>{props.headline}</strong></h1>
+          <p className="lead text-muted pb-3">{props.description}</p>
+        </Col>
+      </Row>
+    </Container>
+  )
+}
+
 
 function NavBar(props) {
 
@@ -58,17 +74,10 @@ function Footer(props) {
 function About(props) {
 
   return (
-    <Container fluid="sm">
-      <Row className="p-5 justify-content-center">
-        <Col className="description rounded-3 align-self-center text-center shadow">
-          <a href="https://github.com/JimothyJohn/uServer">
-            <h1 className="p-4 headline"><strong>µServer</strong></h1>
-          </a>
-          <p className="lead text-muted pb-3">µServer is a template for rapid networking of MCU's.<br />
-          Use the navbar to see what you can do!</p>
-        </Col>
-      </Row>
-    </Container>
+    <Banner
+      headline="µServer"
+      description="µServer is a template for rapid networking of MCU's. Use the navbar to see what you can do!"
+    />
   )
 }
 
@@ -140,7 +149,7 @@ function IO(props) {
           <p className="lead text-muted pb-3">
             Use buttons to set outputs and text to
             read inputs all via web browser.
-            </p>
+          </p>
         </Col>
       </Row>
       <Row className="p-3 justify-content-center">
@@ -492,7 +501,7 @@ function ReadFiles(props) {
       setDirectory(prevState => {
         return {
           ...prevState,
-          files: [{ name: "///Reading..." }]
+          files: [{ name: "Reading..." }]
         };
       });
     }
@@ -601,43 +610,136 @@ function ReadFiles(props) {
 
 function SendRequest(props) {
 
-  const [endpoint, setEndpoint] = useState("/")
-  const [response, setResponse] = useState("")
-  const [hostname, setHost] = useState("http://10.0.0.31:8000");
+  const [request, setRequest] = useState({
+    hostname: "http://10.0.0.28:8000",
+    endpoint: "/ping",
+    query: "",
+  });
+  const [response, setResponse] = useState({
+    payload: "",
+    code: 0,
+  });
+
+  function ChooseHost() {
+
+    const handleChange = (event) => {
+      setRequest(prevState => {
+        return {
+          ...prevState,
+          hostname: event.target.value,
+        };
+      });
+    }
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form>
+            <label for="endpoint">Choose hostname...</label>
+            <select
+              value={request.hostname}
+              className="form-control"
+              onChange={handleChange}>
+              <option value={"http://10.0.0.28:8000"}>Edge</option>
+              <option value={"http://100.100.100.100:8000"}>Cloud</option>
+              <option value={"https://api.coingecko.com/api/v3"}>CoinGecko</option>
+              <option value={"https://api.openai.com/v1/engines/ada"}>OpenAI</option>
+            </select>
+          </form>
+        </Col>
+      </Row >
+    );
+  }
 
   function ChooseEndpoint() {
 
-    function handleSubmit(event) {
-      event.preventDefault();
-      axios.post("/cloud", {
-        hostname: hostname,
-        endpoint: event.target.value
-      })
-      .then(response => { setResponse(response.data.payload); })
-      .catch(error => console.log(error));
+    const handleChange = (event) => {
+      setRequest(prevState => {
+        return {
+          ...prevState,
+          endpoint: event.target.value,
+        };
+      });
     }
 
-    const handleChange = (event) => { setEndpoint(event.target.value); }
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form>
+            <label for="endpoint">Choose endpoint...</label>
+            <select
+              value={request.endpoint}
+              className="form-control"
+              onChange={handleChange}>
+              <option value={"/ping"}>Guide</option>
+              <option value={"/mqtt/config"}>MQTT Configuration</option>
+              <option value={"/modbus"}>Modbus</option>
+              <option value={"/completions"}>OpenAI</option>
+            </select>
+          </form>
+        </Col>
+      </Row >
+    );
+  }
+
+  const adaquery = {
+    prompt: "This is a test",
+    max_tokens: 5,
+  }
+
+  function ChooseQuery() {
+
+    const handleChange = (event) => {
+      setRequest(prevState => {
+        return {
+          ...prevState,
+          query: event.target.value,
+        };
+      });
+    }
+
+
 
     return (
       <Row className="p-3 justify-content-center">
         <Col className="col-4 align-self-center text-center">
           <form onSubmit={handleSubmit}>
-            <label for="endpoint">Choose endpoint...</label>
+            <label for="endpoint">Choose query...</label>
             <select
-              value={endpoint}
+              value={request.query}
               className="form-control"
               onChange={handleChange}>
-              <option value={"/mqtt"}>MQTT</option>
-              <option value={"/ws"}>WebSocket</option>
-              <option value={"/modbus"}>Modbus</option>
+              <option value={""}>Blank</option>
+              <option value={"/jetson"}>Jetson</option>
+              <option value={"/cloud"}>Cloud</option>
+              <option value={adaquery}>OpenAI</option>
             </select>
             <input type="submit" value="Send API call" />
           </form>
-          <p>{response}</p>
+          <p>Host: {response.payload}</p>
         </Col>
       </Row >
     );
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    axios.post("/cloud", {
+      hostname: request.hostname,
+      endpoint: request.endpoint,
+      query: request.query,
+    })
+      .then(response => {
+        let displayed = response.data.payload
+        if (request.endpoint === "/completions") {
+          displayed = displayed.choices[0].text
+        }
+        setResponse({
+          payload: displayed,
+          code: response.data.code,
+        })
+      })
+      .catch(error => console.log(error));
   }
 
   return (
@@ -649,12 +751,13 @@ function SendRequest(props) {
             <p className="lead text-muted pb-3">Grab data from outside sources!</p>
           </Col>
         </Row>
+        <ChooseHost />
         <ChooseEndpoint />
+        <ChooseQuery />
       </Container>
     </div>
   )
 }
-
 
 function App(props) {
   return (

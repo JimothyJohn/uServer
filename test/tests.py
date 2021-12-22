@@ -11,9 +11,9 @@ def ReadInput(pin):
     print(f"Reading pin {pin}...", end="")
     r = requests.post(f'{BASE_URL}/io', data=payload)
     digitalInput = json.loads(r.text)
-    print(f"Pin {digitalInput['pin']} is {digitalInput['state']}!")
     assert digitalInput['pin'] == pin
     assert digitalInput['state'] == ("HIGH" or "LOW")
+    print(f"Pin {digitalInput['pin']} is {digitalInput['state']}!", end="\r")
     return True
 
 
@@ -22,9 +22,10 @@ def SetOutput(pin, state):
     print(f"Setting pin {pin} to {state}...", end="")
     r = requests.post(f'{BASE_URL}/io', data=payload)
     digitalInput = json.loads(r.text)
-    print(f"Pin {digitalInput['pin']} is now {digitalInput['state']}!")
     assert digitalInput['pin'] == pin
     assert digitalInput['state'] == state
+    print(
+        f"Pin {digitalInput['pin']} is now {digitalInput['state']}!", end="\r")
     return True
 
 
@@ -33,19 +34,19 @@ def SetVariable(number):
     print(f"Setting postInt to {number}...", end="")
     r = requests.post(f'{BASE_URL}/variables', data=payload)
     userVariable = json.loads(r.text)
-    print(f"Variable is now {userVariable['postInt']}!")
     assert userVariable['code'] == 0
     assert userVariable['postInt'] == number
+    print(f"Variable is now {userVariable['postInt']}!", end="\r")
     return True
 
 
 def ReadDirectory(dirname):
     payload = json.dumps({'dir': dirname})
     print(f"Reading {dirname} directory...", end="")
-    r = requests.post(f'{BASE_URL}/files', data=payload)
+    r = requests.post(f'{BASE_URL}/dir', data=payload)
     response = json.loads(r.text)
     assert len(response) > 0
-    print(f"First file in directory: {response[0]['name']}")
+    print(f"First file in directory: {response[0]['name']}", end="\r")
     return True
 
 
@@ -54,7 +55,8 @@ def ReadFile(filename):
     print(f"Reading {filename} config...", end="")
     r = requests.post(f'{BASE_URL}/file', data=payload)
     response = json.loads(r.text)
-    print(f"File contents: {response}")
+    assert response['code'] == 0
+    print(f"File contents: {response}", end="\r")
     return True
 
 
@@ -66,8 +68,8 @@ def ConnectMQTT(action, hostname):
         print(f'Disconnecting...', end="")
     r = requests.post(f'{BASE_URL}/mqtt', data=payload)
     response = json.loads(r.text)
-    print(f"Confirmation code: {response['code']}")
     assert response['code'] == 0
+    print(f"Confirmation code: {response['code']}", end="\r")
     return True
 
 
@@ -80,8 +82,8 @@ def PublishMQTT(topic, payload):
     print(f"Publishing \"{payload}\" to {topic}...", end="")
     r = requests.post(f'{BASE_URL}/mqtt', data=payload)
     response = json.loads(r.text)
-    print(f"Confirmation code: {response['code']}")
     assert response['code'] == 0
+    print(f"Confirmation code: {response['code']}", end="\r")
     return True
 
 
@@ -90,8 +92,8 @@ def SubscribeMQTT(topic):
     print(f"Subscribing to {topic}...", end="")
     r = requests.post(f'{BASE_URL}/mqtt', data=payload)
     response = json.loads(r.text)
-    print(f"Confirmation code: {response['code']}")
     assert response['code'] == 0
+    print(f"Confirmation code: {response['code']}", end="\r")
     return True
 
 
@@ -104,8 +106,8 @@ def SendREST(hostname, endpoint, query):
     print(f"Sending {query} to {hostname}{endpoint}...", end="")
     r = requests.post(f'{BASE_URL}/cloud', data=payload)
     response = json.loads(r.text)
-    print(f"Confirmation code: {response['code']}")
     assert response['code'] == 0
+    print(f"Confirmation code: {response['code']}", end="\r")
     return True
 
 

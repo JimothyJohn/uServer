@@ -173,8 +173,120 @@ void requestHandler(AsyncWebServerRequest *request)
 }
 
 // Generic file handler
-void fileHandler(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+void ignoreFile(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
 {
+  return;
+}
+
+void ioHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  StaticJsonDocument<JSON_SIZE> ioDoc;
+  DeserializationError error = deserializeJson(ioDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("/io received");
+  serializeJsonPretty(ioDoc, Serial);
+  Serial.println();
+
+  if (ioDoc["action"] == "read")
+  {
+    if (digitalRead(ioDoc["pin"]))
+    {
+      ioDoc["state"] = "HIGH";
+    }
+    else
+    {
+      ioDoc["state"] = "LOW";
+    }
+  }
+  else if (ioDoc["action"] == "write")
+  {
+    digitalWrite(ioDoc["pin"], ioDoc["state"]);
+  }
+
+  ioDoc["code"] = 0;
+
+  Serial.println("/io response: ");
+  serializeJsonPretty(ioDoc, Serial);
+  Serial.println();
+
+  request->send(200, "application/json", jsonResponse(ioDoc));
+  ioDoc.clear();
+  return;
+}
+
+void variableHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  StaticJsonDocument<JSON_SIZE> variableDoc;
+  DeserializationError error = deserializeJson(variableDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+
+  Serial.println("/variables received");
+  serializeJsonPretty(variableDoc, Serial);
+  Serial.println();
+
+  userVariable = variableDoc["postInt"].as<uint8_t>();
+  variableDoc["code"] = 0;
+  Serial.println("/variables response");
+  serializeJsonPretty(variableDoc, Serial);
+  Serial.println();
+  request->send(200, "application/json", jsonResponse(variableDoc));
+  variableDoc.clear();
+}
+
+void dirHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  StaticJsonDocument<JSON_SIZE> dirDoc;
+  DeserializationError error = deserializeJson(dirDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("/dir received");
+  serializeJsonPretty(dirDoc, Serial);
+  Serial.println();
+
+  StaticJsonDocument<JSON_SIZE> fileList = listDir(SPIFFS, dirDoc["dir"].as<const char *>(), 0);
+
+  Serial.println("/dir response");
+  serializeJsonPretty(fileList, Serial);
+  Serial.println();
+  dirDoc.clear();
+  request->send(200, "application/json", jsonResponse(fileList));
+  fileList.clear();
+  return;
+}
+
+void fileHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  StaticJsonDocument<JSON_SIZE> fileDoc;
+  DeserializationError error = deserializeJson(fileDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("/file received");
+  serializeJsonPretty(fileDoc, Serial);
+  Serial.println();
+
+  StaticJsonDocument<JSON_SIZE> configFile = readFile(SPIFFS, fileDoc["filename"].as<const char *>());
+  configFile["code"] = 0;
+
+  Serial.println("/file response");
+  serializeJsonPretty(configFile, Serial);
+  Serial.println();
+  fileDoc.clear();
+  request->send(200, "application/json", jsonResponse(configFile));
+  configFile.clear();
   return;
 }
 
@@ -238,11 +350,35 @@ void mqttHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
   Serial.println();
   request->send(200, "application/json", jsonResponse(mqttDoc));
   mqttDoc.clear();
+  return;
 }
 
-void cloudHandler()
+void cloudHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-  Serial.println("Cloud handler in progress!");
+  StaticJsonDocument<JSON_SIZE> requestDoc;
+  DeserializationError error = deserializeJson(requestDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("/cloud received");
+  serializeJsonPretty(requestDoc, Serial);
+  Serial.println();
+
+  String hostname = requestDoc["hostname"];
+  String endpoint = requestDoc["endpoint"];
+  String query = requestDoc["query"];
+  requestDoc.clear();
+  String httpRequest = hostname + endpoint + query;
+  StaticJsonDocument<JSON_SIZE> responseDoc = sendREST(httpRequest);
+
+  Serial.println("/cloud response");
+  serializeJsonPretty(responseDoc, Serial);
+  Serial.println();
+
+  request->send(200, "application/json", jsonResponse(responseDoc));
+  responseDoc.clear();
 }
 
 // Custom WebServer
@@ -270,174 +406,33 @@ void uServer::begin()
   */
 
   // IO JSON message parser
-  server.on(
-      "/io", HTTP_POST, requestHandler,
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+  server.on("/io", HTTP_POST, requestHandler, ignoreFile, ioHandler);
+
+  // Variable JSON message parser
+  server.on("/variables", HTTP_POST, requestHandler, ignoreFile, variableHandler);
+
+  server.on("/mqtt", HTTP_POST, requestHandler, ignoreFile, mqttHandler);
+
+  // Variable JSON message parser
+  server.on("/dir", HTTP_POST, requestHandler, ignoreFile, dirHandler);
+
+  // Variable JSON message parser
+  server.on("/file", HTTP_POST, requestHandler, ignoreFile, fileHandler);
+
+  // Variable JSON message parser
+  server.on("/cloud", HTTP_POST, requestHandler, ignoreFile, cloudHandler);
+
+  events.onConnect(
+      [](AsyncEventSourceClient *client)
       {
-        return;
-      },
-      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-      {
-        StaticJsonDocument<JSON_SIZE> ioDoc;
-        DeserializationError error = deserializeJson(ioDoc, data);
-        if (error)
+        if (client->lastId())
         {
-          Serial.println(error.f_str());
-          return;
+          Serial.printf("Client reconnected! Last message ID that it gat is: %u\n", client->lastId());
         }
-        Serial.println("/io received");
-        serializeJsonPretty(ioDoc, Serial);
-        Serial.println();
-
-        if (ioDoc["action"] == "read")
-        {
-          if (digitalRead(ioDoc["pin"]))
-          {
-            ioDoc["state"] = "HIGH";
-          }
-          else
-          {
-            ioDoc["state"] = "LOW";
-          }
-        }
-        else if (ioDoc["action"] == "write")
-        {
-          digitalWrite(ioDoc["pin"], ioDoc["state"]);
-        }
-
-        ioDoc["code"] = 0;
-
-        Serial.println("/io response: ");
-        serializeJsonPretty(ioDoc, Serial);
-        Serial.println();
-
-        request->send(200, "application/json", jsonResponse(ioDoc));
-        ioDoc.clear();
+        //send event with message "hello!", id current millis
+        // and set reconnect delay to 1 second
+        client->send("hello!", NULL, millis(), 1000);
       });
-
-  // Variable JSON message parser
-  server.on(
-      "/variables", HTTP_POST, requestHandler,
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
-      {
-        return;
-      },
-      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-      {
-        StaticJsonDocument<JSON_SIZE> variableDoc;
-        DeserializationError error = deserializeJson(variableDoc, data);
-        if (error)
-        {
-          Serial.println(error.f_str());
-          return;
-        }
-
-        Serial.println("/variables received");
-        serializeJsonPretty(variableDoc, Serial);
-        Serial.println();
-
-        userVariable = variableDoc["postInt"].as<uint8_t>();
-        variableDoc["code"] = 0;
-        Serial.println("/variables response");
-        serializeJsonPretty(variableDoc, Serial);
-        Serial.println();
-        request->send(200, "application/json", jsonResponse(variableDoc));
-        variableDoc.clear();
-      });
-
-  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler, mqttHandler);
-
-  // Variable JSON message parser
-  server.on("/files", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-            {
-              StaticJsonDocument<JSON_SIZE> fileDoc;
-              DeserializationError error = deserializeJson(fileDoc, data);
-              if (error)
-              {
-                Serial.println(error.f_str());
-                return;
-              }
-              Serial.println("/files received");
-              serializeJsonPretty(fileDoc, Serial);
-              Serial.println();
-
-              StaticJsonDocument<JSON_SIZE> fileList = listDir(SPIFFS, fileDoc["dir"].as<const char *>(), 0);
-
-              Serial.println("/files response");
-              serializeJsonPretty(fileList, Serial);
-              Serial.println();
-              fileDoc.clear();
-              request->send(200, "application/json", jsonResponse(fileList));
-              fileList.clear();
-            });
-
-  // Variable JSON message parser
-  server.on("/file", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-            {
-              StaticJsonDocument<JSON_SIZE> fileDoc;
-              DeserializationError error = deserializeJson(fileDoc, data);
-              if (error)
-              {
-                Serial.println(error.f_str());
-                return;
-              }
-              Serial.println("/file received");
-              serializeJsonPretty(fileDoc, Serial);
-              Serial.println();
-
-              StaticJsonDocument<JSON_SIZE> configFile = readFile(SPIFFS, fileDoc["filename"].as<const char *>());
-              configFile["code"] = 0;
-
-              Serial.println("/file response");
-              serializeJsonPretty(configFile, Serial);
-              Serial.println();
-              fileDoc.clear();
-              request->send(200, "application/json", jsonResponse(configFile));
-              configFile.clear();
-            });
-
-  // Variable JSON message parser
-  server.on("/cloud", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-            {
-              StaticJsonDocument<JSON_SIZE> requestDoc;
-              DeserializationError error = deserializeJson(requestDoc, data);
-              if (error)
-              {
-                Serial.println(error.f_str());
-                return;
-              }
-              Serial.println("/cloud received");
-              serializeJsonPretty(requestDoc, Serial);
-              Serial.println();
-
-              String hostname = requestDoc["hostname"];
-              String endpoint = requestDoc["endpoint"];
-              String query = requestDoc["query"];
-              requestDoc.clear();
-              String httpRequest = hostname + endpoint + query;
-              StaticJsonDocument<JSON_SIZE> responseDoc = sendREST(httpRequest);
-
-              Serial.println("/cloud response");
-              serializeJsonPretty(responseDoc, Serial);
-              Serial.println();
-
-              request->send(200, "application/json", jsonResponse(responseDoc));
-              responseDoc.clear();
-            });
-
-  events.onConnect([](AsyncEventSourceClient *client)
-                   {
-                     if (client->lastId())
-                     {
-                       Serial.printf("Client reconnected! Last message ID that it gat is: %u\n", client->lastId());
-                     }
-                     //send event with message "hello!", id current millis
-                     // and set reconnect delay to 1 second
-                     client->send("hello!", NULL, millis(), 1000);
-                   });
   //HTTP Basic authentication
   // events.setAuthentication("user", "pass");
   server.addHandler(&events);

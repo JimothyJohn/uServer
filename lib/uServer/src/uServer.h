@@ -25,23 +25,24 @@ StaticJsonDocument<JSON_SIZE> listDir(fs::FS &fs, const char *dirname, uint8_t l
 // Extract JSON object from .json file
 StaticJsonDocument<JSON_SIZE> readFile(fs::FS &fs, const char *filename);
 
-// Ignore request
+// Generic handling functions
+void notFound(AsyncWebServerRequest *request);
 void requestHandler(AsyncWebServerRequest *request);
-
-// Generic file handler
-void fileHandler(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final);
-
-// MQTT Handling function
+void ignoreFile(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final);
+// Purposeful handling functions
+void ioHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+void variableHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+void dirHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+void fileHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 void mqttHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+void cloudHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
-// Cloud handling function
-void cloudHandler();
-
+// MQTT Functions
 void reconnect();
+void callback(char *topic, byte *payload, unsigned int length);
 static WiFiClient wifiClient;
 static PubSubClient pubsubClient(wifiClient);
 static HTTPClient http;
-void callback(char *topic, byte *payload, unsigned int length);
 StaticJsonDocument<JSON_SIZE> sendREST(String request);
 static AsyncEventSource events = AsyncEventSource("/events"); // access at ws://[esp ip]/w
 static AsyncWebSocket ws = AsyncWebSocket("/ws");
@@ -52,7 +53,6 @@ class uServer
 public:
   uServer();
   void begin();
-  void mqttControl();
   AsyncWebServer server = AsyncWebServer(80);
 };
 

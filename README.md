@@ -6,7 +6,7 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 
 ## Features
 
-See [`Features`](FEATURES.md) for full list of features and examples.
+See [Features](FEATURES.md) for full list of features and examples.
 
 ## Hardware Required
 
@@ -18,22 +18,30 @@ See [`Features`](FEATURES.md) for full list of features and examples.
 
 ## Installation
 
-See [`Quickstart`](QUICKSTART.md) to quickly get up and running.
+See [Quickstart](QUICKSTART.md) to quickly get up and running.
 
-## Capabilities
+## REST API 
 
-uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. See ['API'](API.md) for examples. Endpoints:
+uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. See [API](API.md) for examples. Endpoints:
 
 * /io - Read input statuses or change output states
 * /variables - Change a user variable
 * /mqtt - Connect, publish, and subscribe
 * /files - List files in a directory
 * /file - Read contents of .json configuration file
+* /cloud - Read from cloud API's!
+
+### FastAPI Testing
+
+Repo contains a Docker image with a test endpoint for you:
+
+```bash
+docker-compose up -d --build
+```
 
 ## To-do List
 
-* Fix MQTT endpoint
+* Migrate to ESPAsync_WifiManager
 * Add security/authentication
 * Port to other platforms
 * <a href="https://randomnerdtutorials.com/esp32-microsd-card-arduino">Integrate persistent storage via microSD</a>
-* Convert to more consistent formatting

@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  userver-api:
+    build: ./api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"

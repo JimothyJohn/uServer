@@ -3,13 +3,13 @@
 #include <ESP_WiFiManager.h>   // AP login and maintenance
 #include <AsyncTCP.h>          // Generic async library
 #include <ESPAsyncWebServer.h> // ESP32 async library
-#include <ArduinoOTA.h>        // Enable OTA updates
-#include <ESPmDNS.h>           // Connect by hostname
-#include <FS.h>                // Get FS functions
-#include <SPIFFS.h>            // Enable file system
-#include <PubSubClient.h>      // Enable MQTT
-#include <ArduinoJson.h>       // Handle JSON messages
-#include <HTTPClient.h>        // Extract object data
+// #include <ArduinoOTA.h>        // Enable OTA updates
+#include <ESPmDNS.h>      // Connect by hostname
+#include <FS.h>           // Get FS functions
+#include <SPIFFS.h>       // Enable file system
+#include <PubSubClient.h> // Enable MQTT
+#include <ArduinoJson.h>  // Handle JSON messages
+#include <HTTPClient.h>   // Extract object data
 #include "uServer.h"
 // #include <InfluxDbClient.h> //
 // #include <InfluxDbCloud.h>
@@ -26,19 +26,24 @@
 #define INCLUDE_LIBS false
 #endif
 
-#define INFLUXDB_URL "http://10.0.0.28:8086"
-#define INFLUXDB_TOKEN "s7ETHxOg_FOl1QuIdPeJEbqmV3hB-xth0yueACkkgZ4s_9nwkYwXteGK118csqTKhlljaufIt3jHUiOOBEropA=="
+//
+#define INFLUXDB_URL "http://127.0.0.1:8086"
+#define INFLUXDB_TOKEN ""
 #define INFLUXDB_ORG "default"
-#define INFLUXDB_BUCKET "uServer"
+#define INFLUXDB_BUCKET "default"
 // Set timezone string according to https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
 #define TZ_INFO "CST7CDT"
 
 uServer myserver;
+WiFiClient WifiClient;
 
 // Dual-core tasks
 TaskHandle_t Task1;
 
+StaticJsonDocument<JSON_SIZE> CONFIG = readFile(SPIFFS, "/config/env/config.json");
+
 // Enable OTA updates
+/*
 void SetupOTA()
 {
   Serial.println("Configuring OTA...");
@@ -75,7 +80,7 @@ void SetupOTA()
 
   ArduinoOTA.begin();
 }
-
+*/
 // Initialize Wi-Fi manager and connect to Wi-Fi
 // https://github.com/khoih-prog/ESP_WiFiManager
 void SetupWiFi()
@@ -107,10 +112,13 @@ void Task1code(void *pvParameters)
     // ArduinoOTA.handle();
     if (pubsubClient.connected())
     {
+      Serial.println("LOOPING");
       pubsubClient.loop();
     }
+
+    // sendREST("http://10.0.0.31:8000/");
     // DELETING THIS DELAY WILL CRASH THE MCU
-    delay(25);
+    delay(50);
   }
 }
 
@@ -130,15 +138,16 @@ void setup()
   SetupWiFi();
   // Configures Async web server
   myserver.begin();
-  myserver.mqttControl();
   // Configures over-the-air updates
-  SetupOTA();
+  // SetupOTA();
+
   // mDNS allows for connection at http://userver.local/
   if (!MDNS.begin("userver"))
   {
     Serial.println("Error starting mDNS!");
     ESP.restart();
   }
+
   // Initialize SPIFFS
   if (!SPIFFS.begin(true))
   {

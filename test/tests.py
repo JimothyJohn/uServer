@@ -1,7 +1,9 @@
 #!$HOME/miniconda3/envs/userver/bin/python
-import requests, json
+import requests
+import json
 
 BASE_URL = 'http://userver.local'
+TEST_HOST = "10.0.0.28"
 
 
 def ReadInput(pin):
@@ -56,10 +58,12 @@ def ReadFile(filename):
     return True
 
 
-def ConnectMQTT(action, hostname="127.0.0.1"):
+def ConnectMQTT(action, hostname):
     payload = json.dumps({'action': action, 'host': hostname})
-    if action == 'connect': print(f"Connecting to {hostname}...", end="")
-    else: print(f'Disconnecting...', end="")
+    if action == 'connect':
+        print(f"Connecting to {hostname}...", end="")
+    else:
+        print(f'Disconnecting...', end="")
     r = requests.post(f'{BASE_URL}/mqtt', data=payload)
     response = json.loads(r.text)
     print(f"Confirmation code: {response['code']}")
@@ -81,17 +85,45 @@ def PublishMQTT(topic, payload):
     return True
 
 
+def SubscribeMQTT(topic):
+    payload = json.dumps({'action': 'subscribe', 'topic': topic})
+    print(f"Subscribing to {topic}...", end="")
+    r = requests.post(f'{BASE_URL}/mqtt', data=payload)
+    response = json.loads(r.text)
+    print(f"Confirmation code: {response['code']}")
+    assert response['code'] == 0
+    return True
+
+
+def SendREST(hostname, endpoint, query):
+    payload = json.dumps({
+        'hostname': hostname,
+        'endpoint': endpoint,
+        'query': query
+    })
+    print(f"Sending {query} to {hostname}{endpoint}...", end="")
+    r = requests.post(f'{BASE_URL}/cloud', data=payload)
+    response = json.loads(r.text)
+    print(f"Confirmation code: {response['code']}")
+    assert response['code'] == 0
+    return True
+
+
 def RunTests():
     assert ReadInput(0)
     assert SetOutput(0, 1)
     assert SetVariable(32)
     assert ReadDirectory("/config/mqtt")
     assert ReadFile("/config/mqtt/jetson.json")
-    assert ConnectMQTT("connect", "10.0.0.28")
-    assert ConnectMQTT("disconnect")
-    # assert PublishMQTT("/topic", "Hello world!")
+    assert ConnectMQTT("connect", TEST_HOST)
+    assert PublishMQTT("/topic", "Hello world!")
+    assert SubscribeMQTT("/topic")
+    assert ConnectMQTT("disconnect", TEST_HOST)
+    assert SendREST(f"http://{TEST_HOST}:8000", "/mqtt/config", "jetson")
     return True
 
 
-if RunTests(): print('Tests passed!')
-else: print('Tests failed...')
+if RunTests():
+    print('Tests passed!')
+else:
+    print('Tests failed...')

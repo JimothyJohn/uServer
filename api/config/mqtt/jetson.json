@@ -1,0 +1,7 @@
+{
+    "hostname": "10.0.0.42",
+    "topics": [
+        "/topic",
+        "/hello"
+    ]
+}

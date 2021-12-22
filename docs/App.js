@@ -30,6 +30,7 @@ function NavBar(props) {
               <Nav.Link as={Link} to="/variables">Variables</Nav.Link>
               <Nav.Link as={Link} to="/mqtt">MQTT</Nav.Link>
               <Nav.Link as={Link} to="/files">File System</Nav.Link>
+              <Nav.Link as={Link} to="/cloud">CloudAPI</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -60,7 +61,9 @@ function About(props) {
     <Container fluid="sm">
       <Row className="p-5 justify-content-center">
         <Col className="description rounded-3 align-self-center text-center shadow">
-          <h1 className="p-4 headline"><strong>µServer</strong></h1>
+          <a href="https://github.com/JimothyJohn/uServer">
+            <h1 className="p-4 headline"><strong>µServer</strong></h1>
+          </a>
           <p className="lead text-muted pb-3">µServer is a template for rapid networking of MCU's.<br />
           Use the navbar to see what you can do!</p>
         </Col>
@@ -445,7 +448,7 @@ function ReadFiles(props) {
 
   const [config, setConfig] = useState({
     filename: "",
-    contents: { hostnaee: "127.0.0.1", topics: [] },
+    contents: { hostname: "127.0.0.1", topics: [] },
   });
 
   const [directory, setDirectory] = useState({
@@ -596,6 +599,63 @@ function ReadFiles(props) {
   )
 }
 
+function SendRequest(props) {
+
+  const [endpoint, setEndpoint] = useState("/")
+  const [response, setResponse] = useState("")
+  const [hostname, setHost] = useState("http://10.0.0.31:8000");
+
+  function ChooseEndpoint() {
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      axios.post("/cloud", {
+        hostname: hostname,
+        endpoint: event.target.value
+      })
+      .then(response => { setResponse(response.data.payload); })
+      .catch(error => console.log(error));
+    }
+
+    const handleChange = (event) => { setEndpoint(event.target.value); }
+
+    return (
+      <Row className="p-3 justify-content-center">
+        <Col className="col-4 align-self-center text-center">
+          <form onSubmit={handleSubmit}>
+            <label for="endpoint">Choose endpoint...</label>
+            <select
+              value={endpoint}
+              className="form-control"
+              onChange={handleChange}>
+              <option value={"/mqtt"}>MQTT</option>
+              <option value={"/ws"}>WebSocket</option>
+              <option value={"/modbus"}>Modbus</option>
+            </select>
+            <input type="submit" value="Send API call" />
+          </form>
+          <p>{response}</p>
+        </Col>
+      </Row >
+    );
+  }
+
+  return (
+    <div className="App">
+      <Container fluid="sm">
+        <Row className="p-5 justify-content-center">
+          <Col className="description rounded-3 align-self-center text-center shadow">
+            <h1 className="p-4 headline"><strong>API Calls</strong></h1>
+            <p className="lead text-muted pb-3">Grab data from outside sources!</p>
+          </Col>
+        </Row>
+        <ChooseEndpoint />
+      </Container>
+    </div>
+  )
+}
+
+
 function App(props) {
   return (
     <div className="App">
@@ -606,6 +666,7 @@ function App(props) {
         <Route path="/variables"><Variables /></Route>
         <Route path="/mqtt"><MQTT /></Route>
         <Route path="/files"><ReadFiles /></Route>
+        <Route path="/cloud"><SendRequest /></Route>
       </Switch>
       <Footer />
     </div>

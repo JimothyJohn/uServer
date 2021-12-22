@@ -5,14 +5,15 @@
   Released into the public domain.
 */
 
-#include "Arduino.h"
+#include <Arduino.h>
 // #include "ESP_WiFiManager.h" // AP login and maintenance
-#include "PubSubClient.h"      // Enable MQTT
-#include "ArduinoJson.h"       // Handle JSON messages
-#include "ESPAsyncWebServer.h" // ESP32 async library
+#include <PubSubClient.h>      // Enable MQTT
+#include <ArduinoJson.h>       // Handle JSON messages
+#include <ESPAsyncWebServer.h> // ESP32 async library
 #include <FS.h>                // Get FS functions
 #include <SPIFFS.h>            // Enable file system
-#include "uServer.h"
+#include <HTTPClient.h>        // Enable API calls
+#include "uServer.h"           // Import uServer headers
 
 // Variable for Variables page, change to match your configuration
 uint8_t userVariable = 0;
@@ -76,50 +77,37 @@ StaticJsonDocument<JSON_SIZE> readFile(fs::FS &fs, const char *filename)
   {
     deserializeJson(doc, file);
     file.close();
+    doc["code"] = 0;
+  }
+  else
+  {
+    doc["code"] = 1;
   }
   return doc;
 }
 
-// 404 Page
-void notFound(AsyncWebServerRequest *request)
-{
-  request->send(404, "text/plain", "Not found");
-}
-
-// Ignore request
-void requestHandler(AsyncWebServerRequest *request)
-{
-  return;
-}
-
-// Generic file handler
-void fileHandler(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
-{
-  return;
-}
-
-void reconnect(PubSubClient client)
+void reconnect()
 {
   // Loop until we're reconnected
-  while (!client.connected())
+  while (!pubsubClient.connected())
   {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP32-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str()))
+    if (pubsubClient.connect(clientId.c_str()))
     {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("/home/status/esp32", "Hello world!");
+      pubsubClient.publish("/home/status/esp32", "Hello world!");
       // ... and resubscribe
-      client.subscribe("/home/status/time");
+      pubsubClient.subscribe("/home/status/time");
     }
     else
     {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(pubsubClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -153,33 +141,143 @@ void callback(char *topic, uint8_t *payload, unsigned int length)
   // WriteToInflux(topic, message);
 }
 
+StaticJsonDocument<JSON_SIZE> sendREST(String request)
+{
+  StaticJsonDocument<JSON_SIZE> doc;
+  http.begin(request);
+  // http.setAuthorization(API_KEY);
+  int code = http.GET();
+  if (code < 0)
+  {
+    doc["code"] = 1;
+  }
+  else
+  {
+    String response = http.getString();
+    deserializeJson(doc, response);
+    doc["code"] = 0;
+  }
+  return doc;
+}
+
+// 404 Page
+void notFound(AsyncWebServerRequest *request)
+{
+  request->send(404, "text/plain", "Not found");
+}
+
+// Ignore request
+void requestHandler(AsyncWebServerRequest *request)
+{
+  return;
+}
+
+// Generic file handler
+void fileHandler(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+{
+  return;
+}
+
+void mqttHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  StaticJsonDocument<JSON_SIZE> mqttDoc;
+  DeserializationError error = deserializeJson(mqttDoc, data);
+  if (error)
+  {
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("/mqtt received");
+  serializeJsonPretty(mqttDoc, Serial);
+  Serial.println();
+
+  mqttDoc["code"] = 1;
+
+  if (mqttDoc["action"] == "connect" && !pubsubClient.connected())
+  {
+    const char *hostname = mqttDoc["host"];
+    pubsubClient.setServer(hostname, 1883);
+    pubsubClient.setCallback(callback);
+    reconnect();
+
+    if (pubsubClient.connected())
+    {
+      mqttDoc["code"] = 0;
+    }
+  }
+  else if (mqttDoc["action"] == "disconnect" && pubsubClient.connected())
+  {
+    pubsubClient.disconnect();
+    if (!pubsubClient.connected())
+    {
+      mqttDoc["code"] = 0;
+    }
+  }
+  else if (mqttDoc["action"] == "publish")
+  {
+    const char *payload = mqttDoc["payload"];
+    const char *topic = mqttDoc["topic"];
+    if (pubsubClient.publish(topic, payload))
+    {
+      mqttDoc["code"] = 0;
+    }
+  }
+  else if (mqttDoc["action"] == "subscribe")
+  {
+    const char *topic = mqttDoc["topic"];
+    if (pubsubClient.subscribe(topic))
+    {
+      mqttDoc["code"] = 0;
+    }
+  }
+
+  Serial.print("pubsubClient status: ");
+  Serial.println(pubsubClient.state());
+  Serial.println("/mqtt response");
+  serializeJsonPretty(mqttDoc, Serial);
+  Serial.println();
+  request->send(200, "application/json", jsonResponse(mqttDoc));
+  mqttDoc.clear();
+}
+
+void cloudHandler()
+{
+  Serial.println("Cloud handler in progress!");
+}
+
 // Custom WebServer
 uServer::uServer(){};
 
 void uServer::begin()
 {
   // Index/home page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/index.html");
-  });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/index.html"); });
 
   // CSS file
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/style.css", "text/css");
-  });
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/style.css", "text/css"); });
 
   // React script
-  server.on("/App.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/App.js", "text/js");
+  server.on("/App.js", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/App.js", "text/js"); });
+
+  /*
+  // React utilities
+  server.on("/uServer.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(SPIFFS, "/uServer.js", "text/js");
   });
+  */
 
   // IO JSON message parser
   server.on(
       "/io", HTTP_POST, requestHandler,
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
         return;
       },
-      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+      {
         StaticJsonDocument<JSON_SIZE> ioDoc;
         DeserializationError error = deserializeJson(ioDoc, data);
         if (error)
@@ -220,10 +318,12 @@ void uServer::begin()
   // Variable JSON message parser
   server.on(
       "/variables", HTTP_POST, requestHandler,
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
         return;
       },
-      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+      {
         StaticJsonDocument<JSON_SIZE> variableDoc;
         DeserializationError error = deserializeJson(variableDoc, data);
         if (error)
@@ -245,9 +345,12 @@ void uServer::begin()
         variableDoc.clear();
       });
 
+  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler, mqttHandler);
+
   // Variable JSON message parser
   server.on("/files", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
               StaticJsonDocument<JSON_SIZE> fileDoc;
               DeserializationError error = deserializeJson(fileDoc, data);
               if (error)
@@ -271,7 +374,8 @@ void uServer::begin()
 
   // Variable JSON message parser
   server.on("/file", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
               StaticJsonDocument<JSON_SIZE> fileDoc;
               DeserializationError error = deserializeJson(fileDoc, data);
               if (error)
@@ -294,83 +398,50 @@ void uServer::begin()
               configFile.clear();
             });
 
-  events.onConnect([](AsyncEventSourceClient *client) {
-    if (client->lastId())
-    {
-      Serial.printf("Client reconnected! Last message ID that it gat is: %u\n", client->lastId());
-    }
-    //send event with message "hello!", id current millis
-    // and set reconnect delay to 1 second
-    client->send("hello!", NULL, millis(), 1000);
-  });
+  // Variable JSON message parser
+  server.on("/cloud", HTTP_POST, requestHandler, fileHandler,
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+              StaticJsonDocument<JSON_SIZE> requestDoc;
+              DeserializationError error = deserializeJson(requestDoc, data);
+              if (error)
+              {
+                Serial.println(error.f_str());
+                return;
+              }
+              Serial.println("/cloud received");
+              serializeJsonPretty(requestDoc, Serial);
+              Serial.println();
+
+              String hostname = requestDoc["hostname"];
+              String endpoint = requestDoc["endpoint"];
+              String query = requestDoc["query"];
+              requestDoc.clear();
+              String httpRequest = hostname + endpoint + query;
+              StaticJsonDocument<JSON_SIZE> responseDoc = sendREST(httpRequest);
+
+              Serial.println("/cloud response");
+              serializeJsonPretty(responseDoc, Serial);
+              Serial.println();
+
+              request->send(200, "application/json", jsonResponse(responseDoc));
+              responseDoc.clear();
+            });
+
+  events.onConnect([](AsyncEventSourceClient *client)
+                   {
+                     if (client->lastId())
+                     {
+                       Serial.printf("Client reconnected! Last message ID that it gat is: %u\n", client->lastId());
+                     }
+                     //send event with message "hello!", id current millis
+                     // and set reconnect delay to 1 second
+                     client->send("hello!", NULL, millis(), 1000);
+                   });
   //HTTP Basic authentication
   // events.setAuthentication("user", "pass");
   server.addHandler(&events);
 
   server.onNotFound(notFound);
   server.begin();
-}
-
-// MQTT Handler
-void uServer::mqttControl()
-{
-  server.on("/mqtt", HTTP_POST, requestHandler, fileHandler,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-              StaticJsonDocument<JSON_SIZE> mqttDoc;
-              DeserializationError error = deserializeJson(mqttDoc, data);
-              if (error)
-              {
-                Serial.println(error.f_str());
-                return;
-              }
-              Serial.println("/mqtt received");
-              serializeJsonPretty(mqttDoc, Serial);
-              Serial.println();
-
-              mqttDoc["code"] = 1;
-
-              if (mqttDoc["action"] == "connect" && !pubsubClient.connected())
-              {
-                const char *hostname = mqttDoc["host"];
-                pubsubClient.setServer(hostname, 1883);
-                pubsubClient.setCallback(callback);
-                reconnect(pubsubClient);
-                if (pubsubClient.connected())
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-              else if (mqttDoc["action"] == "disconnect" && pubsubClient.connected())
-              {
-                Serial.println("Disconnecting from MQTT broker");
-                pubsubClient.disconnect();
-                if (!pubsubClient.connected())
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-              else if (mqttDoc["action"] == "publish")
-              {
-                const char *payload = mqttDoc["payload"];
-                const char *topic = mqttDoc["topic"];
-                if (pubsubClient.publish(topic, payload))
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-              else if (mqttDoc["action"] == "subscribe")
-              {
-                const char *topic = mqttDoc["topic"];
-                if (pubsubClient.subscribe(topic))
-                {
-                  mqttDoc["code"] = 0;
-                }
-              }
-
-              Serial.println("/mqtt response");
-              serializeJsonPretty(mqttDoc, Serial);
-              Serial.println();
-              request->send(200, "application/json", jsonResponse(mqttDoc));
-              mqttDoc.clear();
-            });
 }

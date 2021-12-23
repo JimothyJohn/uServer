@@ -1,4 +1,4 @@
-# Features & Examples
+# uServer Features & Examples
 
 * Instant deployment - <a href="https://github.com/platformio/platformio-core">PlatformIO</a> (Estonia)
 * Soft AP - <a href="https://github.com/tzapu/WiFiManager">WiFiManager</a> (Asia)
@@ -18,3 +18,9 @@
     * <a href="https://reactjs.org/tutorial/tutorial.html">React tutorial</a>
     * <a href="https://getbootstrap.com/docs/5.0/getting-started/introduction/">Bootstrap docs</a>
     * <a href="https://axios-http.com/docs/api_intro">Axios docs</a>
+
+## To-do
+
+* Fix Events handler
+* Add pubsubClient as external client from library
+* Make web utilities persistent in separate task

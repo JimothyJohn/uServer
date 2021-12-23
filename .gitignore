@@ -3,6 +3,7 @@
 .logs/
 include/ca.h
 utils/*
+config/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

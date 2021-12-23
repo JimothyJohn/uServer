@@ -1,8 +1,0 @@
-{
-    "hostname": "104.237.138.83",
-    "port": 1833,
-    "topics": [
-        "/topic",
-        "/hello"
-    ]
-}

@@ -40,7 +40,7 @@ WiFiClient WifiClient;
 // Dual-core tasks
 TaskHandle_t Task1;
 
-StaticJsonDocument<JSON_SIZE> CONFIG = readFile(SPIFFS, "/config/env/config.json");
+// StaticJsonDocument<JSON_SIZE> CONFIG = readFile(SPIFFS, "/config/env/config.json");
 
 // Enable OTA updates
 /*

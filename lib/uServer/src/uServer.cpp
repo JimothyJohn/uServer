@@ -38,11 +38,11 @@ StaticJsonDocument<JSON_SIZE> listDir(fs::FS &fs, const char *dirname, uint8_t l
   File root = fs.open(dirname);
   if (!root)
   {
-    Serial.println("− failed to open directory");
+    Serial.println("Failed to open directory");
   }
   if (!root.isDirectory())
   {
-    Serial.println(" − not a directory");
+    Serial.println("Not a directory");
   }
 
   File file = root.openNextFile();
@@ -101,8 +101,6 @@ void reconnect()
       Serial.println("connected");
       // Once connected, publish an announcement...
       pubsubClient.publish("/home/status/esp32", "Hello world!");
-      // ... and resubscribe
-      pubsubClient.subscribe("/home/status/time");
     }
     else
     {
@@ -172,7 +170,7 @@ void requestHandler(AsyncWebServerRequest *request)
   return;
 }
 
-// Generic file handler
+// Ignore file
 void ignoreFile(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
 {
   return;
@@ -342,9 +340,11 @@ void mqttHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
       mqttDoc["code"] = 0;
     }
   }
+  else if (mqttDoc["action"] == "configure")
+  {
+    mqttDoc = readFile(SPIFFS, "/config/mqtt.json");
+  }
 
-  Serial.print("pubsubClient status: ");
-  Serial.println(pubsubClient.state());
   Serial.println("/mqtt response");
   serializeJsonPretty(mqttDoc, Serial);
   Serial.println();

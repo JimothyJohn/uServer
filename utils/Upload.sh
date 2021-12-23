@@ -2,6 +2,6 @@
 
 PIO=$HOME/.platformio/penv/bin/pio
 
-$PIO run -t upload
-$PIO run -t uploadfs
-$PIO device monitor
+$PIO run -t upload | tee ./.logs/upload.txt
+$PIO run -t uploadfs | tee ./.logs/uploadfs.txt
+$PIO device monitor | tee ./.logs/monitor.txt

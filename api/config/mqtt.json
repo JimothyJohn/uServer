@@ -1,0 +1,19 @@
+{
+    "edge": {
+        "hostname": "http://10.0.0.28/",
+        "port": 1883,
+        "key": "",
+        "topics": [
+            "/topic",
+            "/hello"
+        ]
+    },
+    "hivemq": {
+        "hostname": "broker.hivemq.com",
+        "port": 1883,
+        "key": "",
+        "topics": [
+            "/home"
+        ]
+    }
+}

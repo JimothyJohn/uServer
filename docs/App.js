@@ -17,6 +17,23 @@ const error_codes = {
   2: 'No response',
 };
 
+function SendRequest(request) {
+  axios.post("/cloud", {
+    hostname: request.hostname,
+    endpoint: request.endpoint,
+    query: request.query,
+  })
+  .then(response => {
+    // Add failure condition
+    if (response.data.code==0) {
+      let response = response.data.payload
+    }
+  })
+  .catch(error => console.log(error));
+  return response;
+}
+
+
 function Banner(props) {
 
   return (
@@ -31,7 +48,6 @@ function Banner(props) {
   )
 }
 
-
 function NavBar(props) {
 
   return (
@@ -45,7 +61,7 @@ function NavBar(props) {
               <Nav.Link as={Link} to="/io">Digital I/O</Nav.Link>
               <Nav.Link as={Link} to="/variables">Variables</Nav.Link>
               <Nav.Link as={Link} to="/mqtt">MQTT</Nav.Link>
-              <Nav.Link as={Link} to="/files">File System</Nav.Link>
+              <Nav.Link as={Link} to="/dir">File System</Nav.Link>
               <Nav.Link as={Link} to="/cloud">CloudAPI</Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -252,6 +268,13 @@ function Variables(props) {
 function MQTT(props) {
 
   const [connected, setConnected] = useState(false)
+
+  function Configure() {
+    const request = {
+      hostname: "10.0.0.28",
+      endpoint: "/config/mqtt",
+      query: "?config=edge"}
+  }
 
   function Connect() {
 
@@ -470,7 +493,7 @@ function ReadFiles(props) {
 
     function handleSubmit(event) {
       event.preventDefault();
-      axios.post('/files', { dir: directory.dir, })
+      axios.post('/dir', { dir: directory.dir, })
         .then(response => {
           setDirectory(prevState => {
             return {
@@ -608,7 +631,7 @@ function ReadFiles(props) {
   )
 }
 
-function SendRequest(props) {
+function REST(props) {
 
   const [request, setRequest] = useState({
     hostname: "http://10.0.0.28:8000",
@@ -768,8 +791,8 @@ function App(props) {
         <Route path="/io"><IO /></Route>
         <Route path="/variables"><Variables /></Route>
         <Route path="/mqtt"><MQTT /></Route>
-        <Route path="/files"><ReadFiles /></Route>
-        <Route path="/cloud"><SendRequest /></Route>
+        <Route path="/dir"><ReadFiles /></Route>
+        <Route path="/cloud"><REST /></Route>
       </Switch>
       <Footer />
     </div>

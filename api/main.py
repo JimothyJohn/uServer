@@ -4,6 +4,7 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI
 import json
+# from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -17,53 +18,32 @@ def ReadConfig(filename):
     return configJSON
 
 
-endpoints = {
-    "/mqtt": {
-        "devices": {
-            "jetson": ReadConfig("config/mqtt/jetson.json"),
-            "cloud": ReadConfig("config/mqtt/cloud.json")
-        },
-    },
-    "/modbus": {
-        "devices": {
-            "moxa": ReadConfig("config/modbus/moxa.json"),
-            "ur": ReadConfig("config/modbus/ur.json")
-        },
-    },
-    "/ws": {
-        "devices": ["ur", "mecademic"],
-    }
+protocols = {
+    "mqtt": ReadConfig("config/mqtt.json"),
+    "modbus": ReadConfig("config/modbus.json"),
+    "ws": ReadConfig("config/ws.json"),
 }
-
-
-def ListConfigs(protocol):
-    deviceList = [
-        f"{name}, " for name, _ in endpoints["/mqtt"]["devices"].items()
-    ]
-    return {"payload": deviceList, "code": 0}
 
 
 @app.get("/")
 def read_root():
-    return {"payload": endpoints, "code": 0}
+    return {"payload": protocols, "code": 0}
 
 
-@app.get("/mqtt/config/{config}")
-def read_mqtt_config(config: str):
-    return {"payload": endpoints["/mqtt"]["devices"][config], "code": 0}
+@app.get("/config/{protocol}")
+def read_config(protocol: str, name: Optional[str] = None):
+    if name is None:
+        # Send list of possible config files for specific protocol
+        return {
+            "payload": [device for device, _ in protocols[protocol].items()],
+            "code": 0,
+        }
+    else:
+        # Send contents of configuration file
+        return {"payload": protocols[protocol][name], "code": 0}
 
 
-@app.get("/modbus/config/{config}")
-def read_modbus_devices(config: str):
-    return {"payload": endpoints["/modbus"]["devices"][config], "code": 0}
-
-
-@app.get("/ws/config/{config}")
-def read_websocket_devices(config: str):
-    return {"payload": endpoints["/ws"]["devices"][config], "code": 0}
-
-
-@app.get("/ping")
+@ app.get("/ping")
 def read_help():
     return {
         "payload":

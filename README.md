@@ -20,9 +20,9 @@ See [Features](FEATURES.md) for full list of features and examples.
 
 See [Quickstart](QUICKSTART.md) to quickly get up and running.
 
-## REST API 
+## REST API
 
-uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/write configurations files for persistent storage. See [API](API.md) for examples. Endpoints:
+uServer creates an API endpoint for I/O, variables, MQTT, and will be able to read/write configurations files for persistent storage. See [API](api/API.md) for examples. Endpoints:
 
 * /io - Read input statuses or change output states
 * /variables - Change a user variable
@@ -33,7 +33,7 @@ uServer creates an API endpoint for simple I/O, variables, MQTT, and can read/wr
 
 ### FastAPI Testing
 
-Repo contains a Docker image with a test endpoint for you:
+Repo contains a Docker image with a test API endpoint for you on port 8000:
 
 ```bash
 docker-compose up -d --build

@@ -6,7 +6,7 @@ Template for rapid IoT development on ESP32. Build webpages fast and exchange da
 
 ## Features
 
-See [Features](FEATURES.md) for full list of features and examples.
+See [uServer](lib/uServer/README.md) for full list of features and examples.
 
 ## Hardware Required
 
@@ -22,7 +22,7 @@ See [Quickstart](QUICKSTART.md) to quickly get up and running.
 
 ## REST API
 
-uServer creates an API endpoint for I/O, variables, MQTT, and will be able to read/write configurations files for persistent storage. See [API](api/README.md) for examples. Endpoints:
+uServer creates an API endpoint for I/O, variables, MQTT, and will be able to read/write configuration files for persistent storage. See [API](api/README.md) for examples and endpoints below:
 
 * /io - Read input statuses or change output states
 * /variables - Change a user variable

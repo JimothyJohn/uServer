@@ -26,7 +26,6 @@
 #define INCLUDE_LIBS false
 #endif
 
-//
 #define INFLUXDB_URL "http://127.0.0.1:8086"
 #define INFLUXDB_TOKEN ""
 #define INFLUXDB_ORG "default"
@@ -35,7 +34,6 @@
 #define TZ_INFO "CST7CDT"
 
 uServer myserver;
-WiFiClient WifiClient;
 
 // Dual-core tasks
 TaskHandle_t Task1;
